@@ -1,0 +1,33 @@
+{
+  "qemu": {
+    "url": "https://download.qemu.org/qemu-11.1.2.tar.xz",
+    "sha256": "731b5681e4bb18be313231579b8efd0296c5b015fa36dc533874b639ba838016",
+    "directory": "qemu-11.1.2",
+    "checksum_source": "https://formulae.brew.sh/api/formula/qemu.json"
+  },
+  "alpine_netboot_aarch64": {
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/aarch64/alpine-netboot-3.22.7-aarch64.tar.gz",
+    "sha256": "cb1002c8349106f4ac0c439ec1098ae9252e7ad3748654bd54078f26c22d391b",
+    "checksum_source": "https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/aarch64/latest-releases.yaml"
+  },
+  "alpine_root_aarch64": {
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/aarch64/alpine-minirootfs-3.22.7-aarch64.tar.gz",
+    "sha256": "7e9b34ff3304381909e566e2c93de450664ccc724191261423974fc121c11623",
+    "checksum_source": "https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/aarch64/latest-releases.yaml"
+  },
+  "guest_packages": {
+    "linux-virt": {"url":"https://dl-cdn.alpinelinux.org/alpine/v3.22/main/aarch64/linux-virt-6.12.114-r0.apk","sha256":"345b2d561443cd8c978cbcc0f36f2374b3ef702debb747221384b4ddc07d6a77"},
+    "e2fsprogs": {"url":"https://dl-cdn.alpinelinux.org/alpine/v3.22/main/aarch64/e2fsprogs-1.47.2-r2.apk","sha256":"3f57194ef8a75326d95ea2ab72ef92a82349230b1686c988c09e7ee869a1d24f"},
+    "e2fsprogs-libs": {"url":"https://dl-cdn.alpinelinux.org/alpine/v3.22/main/aarch64/e2fsprogs-libs-1.47.2-r2.apk","sha256":"43118bb26b5b631affeca249dc394055b14240f40a1754b093322bf9f1623344"},
+    "libcom_err": {"url":"https://dl-cdn.alpinelinux.org/alpine/v3.22/main/aarch64/libcom_err-1.47.2-r2.apk","sha256":"f0f5ea8a160fe0ff6d0b18eff222f80a6a83eb1ca6abb913db7a902d5bd25c43"},
+    "libuuid": {"url":"https://dl-cdn.alpinelinux.org/alpine/v3.22/main/aarch64/libuuid-2.41.6-r1.apk","sha256":"24e944e8270c0626a0c2083bcdd4f3ee636923ca1f86fc32caa22c5462ce26b9"},
+    "libblkid": {"url":"https://dl-cdn.alpinelinux.org/alpine/v3.22/main/aarch64/libblkid-2.41.6-r1.apk","sha256":"76a8fbfae2ab5ff50c7f30e22812c403a2d9375de85a0a0f2c288ab906d24fb4"},
+    "libeconf": {"url":"https://dl-cdn.alpinelinux.org/alpine/v3.22/main/aarch64/libeconf-0.6.3-r0.apk","sha256":"cdd4311aff72d53056134468b68a68f22829f995627b434d2f88960884319de9"}
+  },
+  "libslirp": {
+    "url": "https://gitlab.freedesktop.org/slirp/libslirp/-/archive/v4.9.6/libslirp-v4.9.6.tar.gz",
+    "sha256": "5bb4d30fd74042c23b4a0475f44d974a8e41dfdcf005476f03754bebc756b760",
+    "directory": "libslirp-v4.9.6",
+    "checksum_source": "https://formulae.brew.sh/api/formula/libslirp.json"
+  }
+}

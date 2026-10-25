@@ -1,0 +1,5 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(iiSDKCore 0.18 CONFIG COMPONENTS Runtime)
+find_dependency(iiJson 0.1 CONFIG)
+include("${CMAKE_CURRENT_LIST_DIR}/iiVirtualizerTargets.cmake")

@@ -1,6 +1,6 @@
 #pragma once
-#include "Gateway.h"
-#include "Store.h"
+#include <iiVirtualizer/Gateway.h>
+#include "../Runtime/Store.h"
 
 namespace ii::virtualizer::gateway_detail {
 inline constexpr std::size_t request_limit=65536,reply_limit=2*1024*1024,batch_limit=128;

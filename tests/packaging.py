@@ -12,7 +12,7 @@ from prepare_guest import cpio_bytes,unpack_cpio,static_aarch64_elf
 module = Path(__file__).resolve().parents[1]
 account_package = 'iiAccountManagerNative'
 assert 'find_dependency('+account_package+' 0.2 CONFIG)' in (module/'cmake/iiVirtualizerConfig.cmake.in').read_text()
-assert '#include <iiAccountManager/NativeAccount.h>' in (module/'src/iiVirtualizer/AccountSession.cpp').read_text()
+assert '#include <iiAccountManager/NativeAccount.h>' in (module/'src/Gateway/AccountSession.cpp').read_text()
 
 entries=[('etc',stat.S_IFDIR|0o755,b''),('etc/os-release',stat.S_IFREG|0o644,b'NAME=iiOS\n'),
          ('bin/sh',stat.S_IFLNK|0o777,b'busybox'),('dev/console',stat.S_IFCHR|0o600,b'')]

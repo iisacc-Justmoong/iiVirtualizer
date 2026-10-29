@@ -1,6 +1,6 @@
 #include <iiVirtualizer/Runtime.h>
 #include <iiVirtualizer/Qemu.h>
-#include "../src/iiVirtualizer/Store.h"
+#include "../src/Runtime/Store.h"
 #include <fstream>
 #include <cstdlib>
 #include <iostream>

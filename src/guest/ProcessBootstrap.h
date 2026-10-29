@@ -1,5 +1,5 @@
 #pragma once
-#include "../iiVirtualizer/Processes.h"
+#include "../Processes/Processes.h"
 #include <iiSDKCore/Process/Process.h>
 
 namespace ii::virtualizer::guest {

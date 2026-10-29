@@ -1,5 +1,5 @@
 #pragma once
-#include "Gateway.h"
+#include <iiVirtualizer/Gateway.h>
 #include <variant>
 
 namespace ii::virtualizer {

@@ -14,21 +14,24 @@ else()
 endif()
 find_package(iiJson 0.1 CONFIG REQUIRED)
 find_package(iiFileProviderNative 0.9 CONFIG REQUIRED HINTS "$ENV{HOME}/.local/SDK/iiFileProvider")
+include(cmake/SourceHeaders.cmake)
+iivirtualizer_forward_source_headers("${CMAKE_CURRENT_BINARY_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/src")
 add_library(iiVirtualizer STATIC
-    src/iiVirtualizer/Types.cpp src/iiVirtualizer/Store.cpp
-    src/iiVirtualizer/Runtime.cpp src/iiVirtualizer/Qmp.cpp src/iiVirtualizer/Qemu.cpp src/iiVirtualizer/GuestProtocol.cpp src/iiVirtualizer/Files.cpp src/iiVirtualizer/FilesWire.cpp src/iiVirtualizer/Processes.cpp src/iiVirtualizer/ProcessWire.cpp src/iiVirtualizer/BinaryWire.cpp)
+    src/Core/Types.cpp src/Runtime/Store.cpp
+    src/Runtime/Runtime.cpp src/Runtime/Qmp.cpp src/Runtime/Qemu.cpp src/Protocol/GuestProtocol.cpp src/Files/Files.cpp src/Files/FilesWire.cpp src/Processes/Processes.cpp src/Processes/ProcessWire.cpp src/Protocol/BinaryWire.cpp)
 add_library(iiVirtualizer::iiVirtualizer ALIAS iiVirtualizer)
 target_compile_features(iiVirtualizer PUBLIC cxx_std_23)
 target_link_libraries(iiVirtualizer PUBLIC iiSDKCore::Runtime PRIVATE iiJson::iiJson iiFileProvider::Native)
 target_include_directories(iiVirtualizer PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+    PRIVATE src/Core src/Runtime src/Protocol src/Files src/Processes src/Gateway)
 set_target_properties(iiVirtualizer PROPERTIES POSITION_INDEPENDENT_CODE ON)
 if(IIVIRTUALIZER_BUILD_GATEWAY)
     find_package(iiNetwork 0.5 CONFIG REQUIRED HINTS "$ENV{HOME}/.local/SDK/iiNetwork")
     find_package(iiAccountManagerNative 0.2 CONFIG REQUIRED HINTS "$ENV{HOME}/.local/SDK/iiAccountManager")
-    target_sources(iiVirtualizer PRIVATE src/iiVirtualizer/Gateway.cpp src/iiVirtualizer/GatewayAgent.cpp
-        src/iiVirtualizer/GatewayWire.cpp src/iiVirtualizer/AccountSession.cpp src/iiVirtualizer/VmClient.cpp)
+    target_sources(iiVirtualizer PRIVATE src/Gateway/Gateway.cpp src/Gateway/GatewayAgent.cpp
+        src/Gateway/GatewayWire.cpp src/Gateway/AccountSession.cpp src/Gateway/VmClient.cpp)
     target_link_libraries(iiVirtualizer PRIVATE iiNetwork::iiNetwork iiAccountManager::Native OpenSSL::Crypto)
     target_compile_definitions(iiVirtualizer PUBLIC IIVIRTUALIZER_HAS_GATEWAY=1)
     add_executable(iivirtualizer-gateway src/cli/GatewayMain.cpp)
@@ -63,6 +66,8 @@ if(IIVIRTUALIZER_BUILD_EXAMPLE)
     target_link_libraries(iiVirtualizer_example PRIVATE iiVirtualizer)
 endif()
 if(BUILD_TESTING)
+    add_test(NAME iiVirtualizer.SourceLayout COMMAND ${CMAKE_COMMAND}
+        "-DSOURCE_ROOT=${CMAKE_CURRENT_SOURCE_DIR}" -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/source_layout.cmake")
     find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
     add_executable(iiVirtualizer_contracts tests/contracts.cpp)
     target_link_libraries(iiVirtualizer_contracts PRIVATE iiVirtualizer)
@@ -160,9 +165,9 @@ if(BUILD_TESTING)
 endif()
 install(TARGETS iiVirtualizer iivirtualizer EXPORT iiVirtualizerTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES src/iiVirtualizer/Types.h src/iiVirtualizer/Runtime.h src/iiVirtualizer/Qemu.h src/iiVirtualizer/GuestProtocol.h src/iiVirtualizer/Files.h src/iiVirtualizer/Processes.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/iiVirtualizer)
+install(FILES src/Core/Types.h src/Runtime/Runtime.h src/Runtime/Qemu.h src/Protocol/GuestProtocol.h src/Files/Files.h src/Processes/Processes.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/iiVirtualizer)
 if(IIVIRTUALIZER_BUILD_GATEWAY)
-    install(FILES src/iiVirtualizer/Gateway.h src/iiVirtualizer/GatewayAgent.h src/iiVirtualizer/VmClient.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/iiVirtualizer)
+    install(FILES src/Gateway/Gateway.h src/Gateway/GatewayAgent.h src/Gateway/VmClient.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/iiVirtualizer)
 endif()
 install(EXPORT iiVirtualizerTargets NAMESPACE iiVirtualizer:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/iiVirtualizer)
 configure_package_config_file(cmake/iiVirtualizerConfig.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/iiVirtualizerConfig.cmake" INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/iiVirtualizer)

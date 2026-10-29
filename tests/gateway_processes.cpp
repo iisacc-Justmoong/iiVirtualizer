@@ -1,6 +1,6 @@
-#include "../src/iiVirtualizer/VmClient.h"
-#include "../src/iiVirtualizer/GatewayAgent.h"
-#include "../src/iiVirtualizer/GatewayWire.h"
+#include "../src/Gateway/VmClient.h"
+#include "../src/Gateway/GatewayAgent.h"
+#include "../src/Gateway/GatewayWire.h"
 #include "../src/guest/ProcessSupervisor.h"
 #include <fstream>
 #include <iostream>

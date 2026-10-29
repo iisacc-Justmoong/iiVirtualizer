@@ -1,5 +1,5 @@
 #pragma once
-#include "Types.h"
+#include <iiVirtualizer/Types.h>
 #include <iiSDKCore/Runtime/Future.h>
 #include <memory>
 

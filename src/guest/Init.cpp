@@ -1,8 +1,8 @@
-#include "../iiVirtualizer/GuestProtocol.h"
+#include "../Protocol/GuestProtocol.h"
 #include "Workspace.h"
 #include "ProcessPlatform.h"
-#include "../iiVirtualizer/ProcessWire.h"
-#include "../iiVirtualizer/FilesWire.h"
+#include "../Processes/ProcessWire.h"
+#include "../Files/FilesWire.h"
 #include <iiFileProviderStorage.h>
 #include <iiSDKCore/Runtime/EventLoop.h>
 #include <iiSDKCore/Runtime/Runtime.h>

@@ -1,5 +1,5 @@
 #pragma once
-#include "Types.h"
+#include <iiVirtualizer/Types.h>
 #include <iiJson/Json.h>
 
 namespace ii::virtualizer::detail {

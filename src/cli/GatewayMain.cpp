@@ -1,6 +1,6 @@
 #include <iiVirtualizer/GatewayAgent.h>
 #include <iiVirtualizer/Qemu.h>
-#include "../iiVirtualizer/GatewayWire.h"
+#include "../Gateway/GatewayWire.h"
 #include <algorithm>
 #include <fstream>
 #include <iostream>

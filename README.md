@@ -1,5 +1,7 @@
 # iiVirtualizer
 
+Sources and adjacent headers are grouped by responsibility under `src/`; see [source layout](docs/SourceLayout.md). The public include names remain unchanged.
+
 A C++23, Qt-free virtual machine runtime for **Linux + iiSDK** guests, Debian and Android-x86 boot, and Windows Server Core build workers. It provides persistent instances, explicit vCPU/memory/disk allocation, lifecycle control, console logs and a guest control channel. The host uses iiSDKCore Process and iiJson; the supplied iiOS guest runs iiSDKCore as Linux PID 1.
 
 One `Runtime` controls multiple concurrently running VMs through one bounded iiSDK worker pool. Each VM owns its QEMU process, UUID, disk, console and control endpoints. Per-instance locks isolate operations; a busy or failed VM does not block unrelated instance controls. `submit` returns an iiSDK Future, `apply` controls several IDs with individual results, and `snapshot` retains failed rows alongside healthy VMs.

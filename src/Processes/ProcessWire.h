@@ -1,5 +1,5 @@
 #pragma once
-#include "Processes.h"
+#include <iiVirtualizer/Processes.h>
 #include <iiJson/Json.h>
 
 namespace ii::virtualizer::process_detail {

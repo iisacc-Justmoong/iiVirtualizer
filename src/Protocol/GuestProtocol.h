@@ -1,5 +1,5 @@
 #pragma once
-#include "Types.h"
+#include <iiVirtualizer/Types.h>
 
 namespace ii::virtualizer {
 enum class GuestCommand { info, ping, shutdown };

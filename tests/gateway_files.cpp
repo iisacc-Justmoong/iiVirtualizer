@@ -1,7 +1,7 @@
 #include <iiVirtualizer/GatewayAgent.h>
 #include "../src/guest/FilesStore.h"
-#include "../src/iiVirtualizer/FilesWire.h"
-#include "../src/iiVirtualizer/GatewayWire.h"
+#include "../src/Files/FilesWire.h"
+#include "../src/Gateway/GatewayWire.h"
 #include <iiFileProviderStorage.h>
 #include <atomic>
 #include <iostream>

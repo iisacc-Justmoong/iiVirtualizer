@@ -1,5 +1,5 @@
 #pragma once
-#include "Gateway.h"
+#include <iiVirtualizer/Gateway.h>
 
 namespace ii::virtualizer {
 struct GatewayImage final { std::string id; InstanceSpec defaults; };

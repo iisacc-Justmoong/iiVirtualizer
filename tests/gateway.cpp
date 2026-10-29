@@ -1,6 +1,6 @@
 #include <iiVirtualizer/Gateway.h>
 #include <iiVirtualizer/GatewayAgent.h>
-#include "../src/iiVirtualizer/GatewayWire.h"
+#include "../src/Gateway/GatewayWire.h"
 #include <algorithm>
 #include <atomic>
 #include <fstream>

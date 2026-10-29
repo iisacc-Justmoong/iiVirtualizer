@@ -1,7 +1,7 @@
 #include "WorkloadSandbox.h"
 #include "FilesStore.h"
 #include "ProcessBootstrap.h"
-#include "../iiVirtualizer/Processes.h"
+#include "../Processes/Processes.h"
 #include <iiFileProviderStorage.h>
 #include <elf.h>
 #include <algorithm>

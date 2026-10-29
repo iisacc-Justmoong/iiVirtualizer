@@ -1,6 +1,6 @@
 #include "FilesStore.h"
 #include "WorkloadSandbox.h"
-#include "../iiVirtualizer/FilesWire.h"
+#include "../Files/FilesWire.h"
 #include <cstdlib>
 #include <iostream>
 #include <sys/prctl.h>

@@ -1,4 +1,6 @@
 /build/
+/resources/platform-guests/
+/resources/ct/
 __pycache__/
 *.pyc
 .DS_Store

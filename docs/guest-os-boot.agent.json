@@ -1,0 +1,578 @@
+{
+  "format": "iisacc.agent-document",
+  "schema_version": 1,
+  "document_id": "urn:iisacc:document:f23d0f4b6db5eff9ead4a2b7a3b3bb2b5b20e0cd6c61dc2d37b24492b30880e4",
+  "project": {
+    "id": "urn:iisacc:project:SDK%2FiiVirtualizer",
+    "name": "iiVirtualizer",
+    "root": "SDK/iiVirtualizer",
+    "kind": "sdk"
+  },
+  "source": {
+    "path": "docs/guest-os-boot.md",
+    "sha256": "f64e04d87d8fe1b8bcf044ff86fb9350b4060f19a87e09fd92d6fa59f901be31",
+    "bytes": 10278,
+    "line_count": 72,
+    "encoding": "utf-8",
+    "language": "ko"
+  },
+  "document": {
+    "title": "Debian 및 Android 최소 부팅",
+    "role": "guide",
+    "authority": "markdown_source"
+  },
+  "blocks": [
+    {
+      "id": "b000001",
+      "kind": "heading",
+      "start_line": 1,
+      "end_line": 1,
+      "raw": "# Debian 및 Android 최소 부팅\n",
+      "level": 1,
+      "title": "Debian 및 Android 최소 부팅"
+    },
+    {
+      "id": "b000002",
+      "kind": "blank",
+      "start_line": 2,
+      "end_line": 2,
+      "raw": "\n"
+    },
+    {
+      "id": "b000003",
+      "kind": "paragraph",
+      "start_line": 3,
+      "end_line": 3,
+      "raw": "VM을 실제로 시작하는 시험은 자원 제한이 있는 전용 Linux 컨테이너 안에서만 수행하며 QEMU TCG를 지정한다. 아래 실행 예는 그 컨테이너 내부의 경로를 사용한다. 기존 HVF 결과는 이력으로만 보관한다. 게스트 원본과 다른 작업의 인스턴스를 쓰기 가능하게 공유하지 않는다.\n"
+    },
+    {
+      "id": "b000004",
+      "kind": "blank",
+      "start_line": 4,
+      "end_line": 4,
+      "raw": "\n"
+    },
+    {
+      "id": "b000005",
+      "kind": "heading",
+      "start_line": 5,
+      "end_line": 5,
+      "raw": "## 부팅 계약\n",
+      "level": 2,
+      "title": "부팅 계약"
+    },
+    {
+      "id": "b000006",
+      "kind": "blank",
+      "start_line": 6,
+      "end_line": 6,
+      "raw": "\n"
+    },
+    {
+      "id": "b000007",
+      "kind": "paragraph",
+      "start_line": 7,
+      "end_line": 7,
+      "raw": "`InstanceSpec::kernel_command_line`이 비어 있으면 기존 iiOS 부팅 인수를 생성한다. 값을 지정하면 QEMU `-append`에 해당 문자열 하나를 그대로 전달한다. 외부 셸은 사용하지 않는다. 게스트의 콘솔, 루트 볼륨, 초기화 프로그램은 호출자가 지정한다. 최대 4096바이트의 출력 가능한 ASCII를 허용하며 실제 커널의 길이 제한도 따라야 한다.\n"
+    },
+    {
+      "id": "b000008",
+      "kind": "blank",
+      "start_line": 8,
+      "end_line": 8,
+      "raw": "\n"
+    },
+    {
+      "id": "b000009",
+      "kind": "paragraph",
+      "start_line": 9,
+      "end_line": 9,
+      "raw": "CLI에서는 `create --kernel-args 'console=ttyAMA0 root=/dev/vda1 rw'`로 지정한다. `--graphics virtio-gpu`는 화면 창을 열지 않고 virtio GPU를 제공한다. 기본값 `none`은 기존 iiOS 동작을 유지한다. 두 설정은 인스턴스 manifest에 저장되어 재시작 후에도 보존되며, 필드가 없는 기존 schema 1 manifest는 이전 기본값으로 읽힌다.\n"
+    },
+    {
+      "id": "b000010",
+      "kind": "blank",
+      "start_line": 10,
+      "end_line": 10,
+      "raw": "\n"
+    },
+    {
+      "id": "b000011",
+      "kind": "paragraph",
+      "start_line": 11,
+      "end_line": 11,
+      "raw": "`--base-disk`는 RAW 복제본을 사용하며 운영체제 이미지를 원본과 분리한다. Debian이나 Android의 초기화 프로그램은 iiOS 전용 게스트 에이전트를 제공하지 않으므로 `wait-ready`, Files 및 프로세스 API의 준비 여부와 운영체제 부팅 성공을 구분해야 한다. QMP 기반 시작·조회·일시 정지·재개·강제 종료는 계속 사용할 수 있다.\n"
+    },
+    {
+      "id": "b000012",
+      "kind": "blank",
+      "start_line": 12,
+      "end_line": 12,
+      "raw": "\n"
+    },
+    {
+      "id": "b000013",
+      "kind": "heading",
+      "start_line": 13,
+      "end_line": 13,
+      "raw": "## 검증 범위\n",
+      "level": 2,
+      "title": "검증 범위"
+    },
+    {
+      "id": "b000014",
+      "kind": "blank",
+      "start_line": 14,
+      "end_line": 14,
+      "raw": "\n"
+    },
+    {
+      "id": "b000015",
+      "kind": "paragraph",
+      "start_line": 15,
+      "end_line": 15,
+      "raw": "실행 이미지와 인스턴스는 `resources/platform-guests/` 아래에, 검증 결과와 콘솔 로그는 `build/` 아래에 보관한다. Debian 시험은 공식 ARM64 또는 AMD64 genericcloud 이미지를 사용하며 Linux PID 1과 systemd 사용자 공간까지 확인한다. Android는 Android-x86 9.0-r2의 x86_64 이미지와 TCG 에뮬레이션을 사용하며 Android init, 속성 서비스 및 프레임워크의 부팅 완료를 확인한다.\n"
+    },
+    {
+      "id": "b000016",
+      "kind": "blank",
+      "start_line": 16,
+      "end_line": 16,
+      "raw": "\n"
+    },
+    {
+      "id": "b000017",
+      "kind": "heading",
+      "start_line": 17,
+      "end_line": 17,
+      "raw": "## 이미지와 실행 도구\n",
+      "level": 2,
+      "title": "이미지와 실행 도구"
+    },
+    {
+      "id": "b000018",
+      "kind": "blank",
+      "start_line": 18,
+      "end_line": 18,
+      "raw": "\n"
+    },
+    {
+      "id": "b000019",
+      "kind": "paragraph",
+      "start_line": 19,
+      "end_line": 19,
+      "raw": "`tools/os_sources.json`에 Debian `20261021-2638`의 ARM64와 AMD64, Android-x86 `9.0-r2`, e2fsprogs `1.47.2`의 출처와 체크섬을 고정했다. Debian은 공개 SHA-512와 로컬 SHA-256 고정을 함께 확인하고, Android는 배포처가 공개한 SHA-1과 추가 SHA-256 고정을 함께 확인한다. 체크섬 일치를 확인한 것이며 GPG 서명 검증 결과를 주장하지 않는다.\n"
+    },
+    {
+      "id": "b000020",
+      "kind": "blank",
+      "start_line": 20,
+      "end_line": 20,
+      "raw": "\n"
+    },
+    {
+      "id": "b000021",
+      "kind": "paragraph",
+      "start_line": 21,
+      "end_line": 21,
+      "raw": "작업 디렉터리는 `/Volumes/Storage/Workspace/SDK/iiVirtualizer`이다. 재사용할 실행 이미지는 존재하지 않는 `resources/` 하위 경로로 지정하고 검증 결과는 `build/`에 둘 수 있다. `--source`를 생략하면 고정한 URL에서 `resources/platform-guests/`로 내려받는다. 기존 캐시도 매번 체크섬을 확인한다. AMD64 준비와 검증 절차는 [아키텍처별 게스트 안내](platform-guests.md)에 있다.\n"
+    },
+    {
+      "id": "b000022",
+      "kind": "blank",
+      "start_line": 22,
+      "end_line": 22,
+      "raw": "\n"
+    },
+    {
+      "id": "b000023",
+      "kind": "fenced_code",
+      "start_line": 23,
+      "end_line": 28,
+      "raw": "```sh\npython3 -B tools/prepare_os_guests.py debian \\\n  --output resources/platform-guests/linux-arm-prepared\npython3 -B tools/prepare_os_guests.py android \\\n  --output resources/platform-guests/android-x86-prepared\n```\n",
+      "language": "sh",
+      "code": "python3 -B tools/prepare_os_guests.py debian \\\n  --output resources/platform-guests/linux-arm-prepared\npython3 -B tools/prepare_os_guests.py android \\\n  --output resources/platform-guests/android-x86-prepared\n",
+      "closed": true
+    },
+    {
+      "id": "b000024",
+      "kind": "blank",
+      "start_line": 29,
+      "end_line": 29,
+      "raw": "\n"
+    },
+    {
+      "id": "b000025",
+      "kind": "paragraph",
+      "start_line": 30,
+      "end_line": 30,
+      "raw": "Debian 준비에는 `debugfs`가 필요하다. 이번 작업에서는 소스 체크섬 `08242e64ca0e8194d9c1caad49762b19209a06318199b63ce74ae4ef2d74e63c`의 공식 e2fsprogs 아카이브를 `build/dependencies/e2fsprogs-1.47.2`에 풀고, 그 안의 `build/`에서 `../configure --disable-nls --disable-fsck --disable-e2initrd-helper --disable-uuidd --disable-fuse2fs`와 `make -j4`로 네이티브 도구를 만들었다. 다른 설치를 사용할 때에는 `--debugfs /absolute/path/debugfs`를 지정한다. Android 준비에는 `bsdtar`와 ext4를 생성하는 `mke2fs`가 필요하며 `--mke2fs`로 경로를 바꿀 수 있다. 사용한 macOS의 mke2fs는 기존 Android Platform Tools 설치에 포함된 실행 파일이다.\n"
+    },
+    {
+      "id": "b000026",
+      "kind": "blank",
+      "start_line": 31,
+      "end_line": 31,
+      "raw": "\n"
+    },
+    {
+      "id": "b000027",
+      "kind": "paragraph",
+      "start_line": 32,
+      "end_line": 32,
+      "raw": "Debian은 검증된 sparse tar 아카이브의 `disk.raw`를 스트림으로 읽고 GPT에서 루트 파티션만 분리하여 `/dev/vda` 전체를 ext4 루트로 사용한다. 중간에 원본 디스크 전체를 다시 기록하지 않는다. 커널과 initramfs는 해당 Debian 이미지의 `/boot`에서 추출한다. 별도 EFI 파티션을 사용하지 않도록 fstab을 맞추고, cloud-init을 사용하지 않는 최소 환경에서 SSH 호스트 키가 빠지지 않도록 게스트의 첫 서비스에서 `ssh-keygen -A`를 실행한다. 계정 로그인이나 네트워크 연결은 부팅 성공 조건에 포함하지 않는다.\n"
+    },
+    {
+      "id": "b000028",
+      "kind": "blank",
+      "start_line": 33,
+      "end_line": 33,
+      "raw": "\n"
+    },
+    {
+      "id": "b000029",
+      "kind": "paragraph",
+      "start_line": 34,
+      "end_line": 34,
+      "raw": "Android는 원본 `system.sfs`를 유지하고 별도 RAW ext4 디스크에 쓰기 가능한 data 디렉터리와 검증용 ramdisk를 준비한다. virtio GPU와 소프트웨어 렌더러를 사용하며 640×480 모드 요청, `pm.dexopt.first-boot=verify`, 부팅 애니메이션 생략으로 TCG의 초기화 부하를 줄인다. `sys.boot_completed`는 읽어서 판정하며 설정하지 않는다. Android init이나 프레임워크 바이너리에 성공 상태를 강제하는 패치를 넣지 않는다.\n"
+    },
+    {
+      "id": "b000030",
+      "kind": "blank",
+      "start_line": 35,
+      "end_line": 35,
+      "raw": "\n"
+    },
+    {
+      "id": "b000031",
+      "kind": "paragraph",
+      "start_line": 36,
+      "end_line": 36,
+      "raw": "검증용 프로브는 `example/guest-os/`에 있다. Debian 프로브는 PID 1, 운영체제, 부팅 ID, multi-user target, 루트 마운트를 읽는다. Android 프로브는 PID 1과 속성 서비스, Zygote, SurfaceFlinger 및 `system_server` 프로세스를 확인한다. 이 프로브를 포함한 이미지는 최소 부팅 확인용이다.\n"
+    },
+    {
+      "id": "b000032",
+      "kind": "blank",
+      "start_line": 37,
+      "end_line": 37,
+      "raw": "\n"
+    },
+    {
+      "id": "b000033",
+      "kind": "paragraph",
+      "start_line": 38,
+      "end_line": 38,
+      "raw": "다음 명령은 전용 컨테이너의 `/work/iiVirtualizer`에서 실행한다. 이미지와 매니페스트를 먼저 전용 볼륨으로 복사하고 `image.json`의 각 아티팩트 경로를 컨테이너 내부 절대 경로로 준비해야 한다. 컨테이너가 네트워크와 `/dev/kvm`을 노출하지 않는지도 먼저 확인한다. 결과 디렉터리와 인스턴스 ID는 새 이름을 사용한다.\n"
+    },
+    {
+      "id": "b000034",
+      "kind": "blank",
+      "start_line": 39,
+      "end_line": 39,
+      "raw": "\n"
+    },
+    {
+      "id": "b000035",
+      "kind": "fenced_code",
+      "start_line": 40,
+      "end_line": 53,
+      "raw": "```sh\npython3 -B tests/os_boot.py --runtime build/iivirtualizer \\\n  --image resources/platform-guests/linux-arm-prepared/image.json \\\n  --root resources/platform-guests/os-guest-vms --output build/os-boot/debian-result \\\n  --id debian-fresh --guest debian --accel tcg \\\n  --qemu /usr/bin/qemu-system-aarch64\n\npython3 -B tests/os_boot.py --runtime build/iivirtualizer \\\n  --image resources/platform-guests/android-x86-prepared/image.json \\\n  --root resources/platform-guests/os-guest-vms --output build/os-boot/android-result \\\n  --id android-fresh --guest android --accel tcg \\\n  --qemu /usr/bin/qemu-system-x86_64 \\\n  --timeout 1800\n```\n",
+      "language": "sh",
+      "code": "python3 -B tests/os_boot.py --runtime build/iivirtualizer \\\n  --image resources/platform-guests/linux-arm-prepared/image.json \\\n  --root resources/platform-guests/os-guest-vms --output build/os-boot/debian-result \\\n  --id debian-fresh --guest debian --accel tcg \\\n  --qemu /usr/bin/qemu-system-aarch64\n\npython3 -B tests/os_boot.py --runtime build/iivirtualizer \\\n  --image resources/platform-guests/android-x86-prepared/image.json \\\n  --root resources/platform-guests/os-guest-vms --output build/os-boot/android-result \\\n  --id android-fresh --guest android --accel tcg \\\n  --qemu /usr/bin/qemu-system-x86_64 \\\n  --timeout 1800\n",
+      "closed": true
+    },
+    {
+      "id": "b000036",
+      "kind": "blank",
+      "start_line": 54,
+      "end_line": 54,
+      "raw": "\n"
+    },
+    {
+      "id": "b000037",
+      "kind": "paragraph",
+      "start_line": 55,
+      "end_line": 55,
+      "raw": "검증 스크립트는 iiVirtualizer CLI로 인스턴스를 생성하고 부팅한다. 완전한 게스트 상태 보고를 확인한 후 QMP 일시 정지·재개를 검사하고 해당 인스턴스를 종료한다. `commands.json`, `console.log`, `result.json`, `stopped.json`을 각각 남긴다. 실패한 콘솔도 보존한다. 기존 인스턴스는 정지 상태이고 부팅 설정과 커널·initramfs 체크섬이 일치할 때만 명시적 `--reuse`로 재사용한다. 사용자 데이터가 변경될 수 있으므로 재사용 볼륨을 원본 베이스 디스크와 같은 해시로 취급하지 않는다.\n"
+    },
+    {
+      "id": "b000038",
+      "kind": "blank",
+      "start_line": 56,
+      "end_line": 56,
+      "raw": "\n"
+    },
+    {
+      "id": "b000039",
+      "kind": "heading",
+      "start_line": 57,
+      "end_line": 57,
+      "raw": "## 이전 호스트 검증 결과와 한계\n",
+      "level": 2,
+      "title": "이전 호스트 검증 결과와 한계"
+    },
+    {
+      "id": "b000040",
+      "kind": "blank",
+      "start_line": 58,
+      "end_line": 58,
+      "raw": "\n"
+    },
+    {
+      "id": "b000041",
+      "kind": "paragraph",
+      "start_line": 59,
+      "end_line": 59,
+      "raw": "컨테이너 전용 시험 정책 이전인 2026-10-26 Apple Silicon macOS 호스트에서 QEMU 11.1.2와 당시 iiVirtualizer 빌드를 사용했다. Debian은 ARM64/HVF, Android는 x86_64/TCG 경로이다. 이는 컨테이너 내부 재검증 결과가 아니다. 두 이미지 모두 네트워크를 연결하지 않는다. Android는 API 28의 userdebug/test-keys 배포본과 SELinux permissive 검증 프로필이다. Android ARM64/HVF, 실제 장치, 앱 호환성·성능 또는 운영 보안 검증은 이 결과에 포함하지 않는다.\n"
+    },
+    {
+      "id": "b000042",
+      "kind": "blank",
+      "start_line": 60,
+      "end_line": 60,
+      "raw": "\n"
+    },
+    {
+      "id": "b000043",
+      "kind": "paragraph",
+      "start_line": 61,
+      "end_line": 61,
+      "raw": "Debian에서 Linux `6.12.113+deb13-cloud-arm64`, `pid1=systemd`, `multi_user=active`, `/dev/vda ext4`를 확인했다. 보완한 이미지에서는 SSH 서비스 시작도 정상으로 기록되지만 원격 로그인은 시험하지 않았다. 최종 자동 부팅 결과는 `build/os-boot/debian-verified/result.json`과 같은 디렉터리의 콘솔에 보관한다.\n"
+    },
+    {
+      "id": "b000044",
+      "kind": "blank",
+      "start_line": 62,
+      "end_line": 62,
+      "raw": "\n"
+    },
+    {
+      "id": "b000045",
+      "kind": "paragraph",
+      "start_line": 63,
+      "end_line": 63,
+      "raw": "Android 첫 검증에서 Linux `4.19.110-android-x86_64-g066cc1d`, Android 9/API 28, Android init, Zygote·SurfaceFlinger·system_server 및 실제 `sys.boot_completed=1`을 확인했다. 첫 기본 해상도 부팅은 패키지 처리와 UI 렌더링 지연으로 framework watchdog 재시작이 발생했고, 이후 부하를 줄여 완료되었다. 이 초기 진단 콘솔과 홈 앱 선택 화면 캡처는 `build/os-boot/android-first-complete/`, `build/os-boot/android-first-boot.png`에 보존한다. 저부하 재현 프로필의 최종 자동 부팅 결과는 `build/os-boot/android-verified/`에 기록한다.\n"
+    },
+    {
+      "id": "b000046",
+      "kind": "blank",
+      "start_line": 64,
+      "end_line": 64,
+      "raw": "\n"
+    },
+    {
+      "id": "b000047",
+      "kind": "paragraph",
+      "start_line": 65,
+      "end_line": 65,
+      "raw": "호스트 계약 테스트는 `build/os-boot-post-fix-tests.xml`의 14개, 분리된 설치 패키지 소비자 테스트는 `build/os-boot/consumer/build/installed-final-tests.xml`의 1개이다. SDK 설치 검증은 `build/os-boot/install` 스테이징을 사용한다. 이번 결과를 이전 iiOS 이미지의 Files·프로세스 API 실행 검증과 혼동하지 않아야 한다.\n"
+    },
+    {
+      "id": "b000048",
+      "kind": "blank",
+      "start_line": 66,
+      "end_line": 67,
+      "raw": "\n\n"
+    },
+    {
+      "id": "b000049",
+      "kind": "paragraph",
+      "start_line": 68,
+      "end_line": 68,
+      "raw": "최종 자동 검증에서 Debian의 부팅 보고까지 51.533초, 새 Android 인스턴스의 빈 data 디렉터리에서 부팅 보고까지 137.503초를 관측했다. 이미지 다운로드·생성·인스턴스 복제 시간은 이 부팅 시간과 분리한다. 두 경로 모두 `paused → running → running` 상태 전이를 확인한 뒤 `stopped`를 확인했다. Android 저부하 재현 검증에서는 직렬 콘솔로 설정을 바꾸지 않았다.\n"
+    },
+    {
+      "id": "b000050",
+      "kind": "blank",
+      "start_line": 69,
+      "end_line": 69,
+      "raw": "\n"
+    },
+    {
+      "id": "b000051",
+      "kind": "paragraph",
+      "start_line": 70,
+      "end_line": 70,
+      "raw": "통합 결과와 아티팩트 체크섬 목록은 `build/os-boot/verification.json`에 보관한다. 보존한 이전 인스턴스는 `build/ob/debian13`, `build/ob/android9-min`이며, 초기 Android 진단 인스턴스 `build/ob/android9`도 종료 후 남겨 두었다. 현재 격리 정책에서는 이 호스트 인스턴스를 그대로 재실행하지 않는다.\n"
+    },
+    {
+      "id": "b000052",
+      "kind": "blank",
+      "start_line": 71,
+      "end_line": 71,
+      "raw": "\n"
+    },
+    {
+      "id": "b000053",
+      "kind": "paragraph",
+      "start_line": 72,
+      "end_line": 72,
+      "raw": "출처: [Debian 공식 cloud 이미지](https://cloud.debian.org/images/cloud/trixie/20261021-2638/), [Android-x86 9.0-r2 릴리스](https://www.android-x86.org/releases/releasenote-9-0-r2.html), [QEMU ARM virt 보드](https://www.qemu.org/docs/master/system/arm/virt.html).\n"
+    }
+  ],
+  "outline": [
+    {
+      "block_id": "b000001",
+      "parent_id": null,
+      "level": 1,
+      "title": "Debian 및 Android 최소 부팅",
+      "anchor": "debian-및-android-최소-부팅",
+      "start_line": 1
+    },
+    {
+      "block_id": "b000005",
+      "parent_id": "b000001",
+      "level": 2,
+      "title": "부팅 계약",
+      "anchor": "부팅-계약",
+      "start_line": 5
+    },
+    {
+      "block_id": "b000013",
+      "parent_id": "b000001",
+      "level": 2,
+      "title": "검증 범위",
+      "anchor": "검증-범위",
+      "start_line": 13
+    },
+    {
+      "block_id": "b000017",
+      "parent_id": "b000001",
+      "level": 2,
+      "title": "이미지와 실행 도구",
+      "anchor": "이미지와-실행-도구",
+      "start_line": 17
+    },
+    {
+      "block_id": "b000039",
+      "parent_id": "b000001",
+      "level": 2,
+      "title": "이전 호스트 검증 결과와 한계",
+      "anchor": "이전-호스트-검증-결과와-한계",
+      "start_line": 57
+    }
+  ],
+  "indexes": {
+    "directive_candidates": [
+      {
+        "block_id": "b000003",
+        "line": 3,
+        "text": "VM을 실제로 시작하는 시험은 자원 제한이 있는 전용 Linux 컨테이너 안에서만 수행하며 QEMU TCG를 지정한다. 아래 실행 예는 그 컨테이너 내부의 경로를 사용한다. 기존 HVF 결과는 이력으로만 보관한다. 게스트 원본과 다른 작업의 인스턴스를 쓰기 가능하게 공유하지 않는다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000007",
+        "line": 7,
+        "text": "`InstanceSpec::kernel_command_line`이 비어 있으면 기존 iiOS 부팅 인수를 생성한다. 값을 지정하면 QEMU `-append`에 해당 문자열 하나를 그대로 전달한다. 외부 셸은 사용하지 않는다. 게스트의 콘솔, 루트 볼륨, 초기화 프로그램은 호출자가 지정한다. 최대 4096바이트의 출력 가능한 ASCII를 허용하며 실제 커널의 길이 제한도 따라야 한다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000011",
+        "line": 11,
+        "text": "`--base-disk`는 RAW 복제본을 사용하며 운영체제 이미지를 원본과 분리한다. Debian이나 Android의 초기화 프로그램은 iiOS 전용 게스트 에이전트를 제공하지 않으므로 `wait-ready`, Files 및 프로세스 API의 준비 여부와 운영체제 부팅 성공을 구분해야 한다. QMP 기반 시작·조회·일시 정지·재개·강제 종료는 계속 사용할 수 있다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000019",
+        "line": 19,
+        "text": "`tools/os_sources.json`에 Debian `20261021-2638`의 ARM64와 AMD64, Android-x86 `9.0-r2`, e2fsprogs `1.47.2`의 출처와 체크섬을 고정했다. Debian은 공개 SHA-512와 로컬 SHA-256 고정을 함께 확인하고, Android는 배포처가 공개한 SHA-1과 추가 SHA-256 고정을 함께 확인한다. 체크섬 일치를 확인한 것이며 GPG 서명 검증 결과를 주장하지 않는다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000027",
+        "line": 32,
+        "text": "Debian은 검증된 sparse tar 아카이브의 `disk.raw`를 스트림으로 읽고 GPT에서 루트 파티션만 분리하여 `/dev/vda` 전체를 ext4 루트로 사용한다. 중간에 원본 디스크 전체를 다시 기록하지 않는다. 커널과 initramfs는 해당 Debian 이미지의 `/boot`에서 추출한다. 별도 EFI 파티션을 사용하지 않도록 fstab을 맞추고, cloud-init을 사용하지 않는 최소 환경에서 SSH 호스트 키가 빠지지 않도록 게스트의 첫 서비스에서 `ssh-keygen -A`를 실행한다. 계정 로그인이나 네트워크 연결은 부팅 성공 조건에 포함하지 않는다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000029",
+        "line": 34,
+        "text": "Android는 원본 `system.sfs`를 유지하고 별도 RAW ext4 디스크에 쓰기 가능한 data 디렉터리와 검증용 ramdisk를 준비한다. virtio GPU와 소프트웨어 렌더러를 사용하며 640×480 모드 요청, `pm.dexopt.first-boot=verify`, 부팅 애니메이션 생략으로 TCG의 초기화 부하를 줄인다. `sys.boot_completed`는 읽어서 판정하며 설정하지 않는다. Android init이나 프레임워크 바이너리에 성공 상태를 강제하는 패치를 넣지 않는다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000033",
+        "line": 38,
+        "text": "다음 명령은 전용 컨테이너의 `/work/iiVirtualizer`에서 실행한다. 이미지와 매니페스트를 먼저 전용 볼륨으로 복사하고 `image.json`의 각 아티팩트 경로를 컨테이너 내부 절대 경로로 준비해야 한다. 컨테이너가 네트워크와 `/dev/kvm`을 노출하지 않는지도 먼저 확인한다. 결과 디렉터리와 인스턴스 ID는 새 이름을 사용한다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000037",
+        "line": 55,
+        "text": "검증 스크립트는 iiVirtualizer CLI로 인스턴스를 생성하고 부팅한다. 완전한 게스트 상태 보고를 확인한 후 QMP 일시 정지·재개를 검사하고 해당 인스턴스를 종료한다. `commands.json`, `console.log`, `result.json`, `stopped.json`을 각각 남긴다. 실패한 콘솔도 보존한다. 기존 인스턴스는 정지 상태이고 부팅 설정과 커널·initramfs 체크섬이 일치할 때만 명시적 `--reuse`로 재사용한다. 사용자 데이터가 변경될 수 있으므로 재사용 볼륨을 원본 베이스 디스크와 같은 해시로 취급하지 않는다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000041",
+        "line": 59,
+        "text": "컨테이너 전용 시험 정책 이전인 2026-10-26 Apple Silicon macOS 호스트에서 QEMU 11.1.2와 당시 iiVirtualizer 빌드를 사용했다. Debian은 ARM64/HVF, Android는 x86_64/TCG 경로이다. 이는 컨테이너 내부 재검증 결과가 아니다. 두 이미지 모두 네트워크를 연결하지 않는다. Android는 API 28의 userdebug/test-keys 배포본과 SELinux permissive 검증 프로필이다. Android ARM64/HVF, 실제 장치, 앱 호환성·성능 또는 운영 보안 검증은 이 결과에 포함하지 않는다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000051",
+        "line": 70,
+        "text": "통합 결과와 아티팩트 체크섬 목록은 `build/os-boot/verification.json`에 보관한다. 보존한 이전 인스턴스는 `build/ob/debian13`, `build/ob/android9-min`이며, 초기 Android 진단 인스턴스 `build/ob/android9`도 종료 후 남겨 두었다. 현재 격리 정책에서는 이 호스트 인스턴스를 그대로 재실행하지 않는다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      }
+    ],
+    "commands": [
+      {
+        "block_id": "b000023",
+        "language": "sh",
+        "code": "python3 -B tools/prepare_os_guests.py debian \\\n  --output resources/platform-guests/linux-arm-prepared\npython3 -B tools/prepare_os_guests.py android \\\n  --output resources/platform-guests/android-x86-prepared\n"
+      },
+      {
+        "block_id": "b000035",
+        "language": "sh",
+        "code": "python3 -B tests/os_boot.py --runtime build/iivirtualizer \\\n  --image resources/platform-guests/linux-arm-prepared/image.json \\\n  --root resources/platform-guests/os-guest-vms --output build/os-boot/debian-result \\\n  --id debian-fresh --guest debian --accel tcg \\\n  --qemu /usr/bin/qemu-system-aarch64\n\npython3 -B tests/os_boot.py --runtime build/iivirtualizer \\\n  --image resources/platform-guests/android-x86-prepared/image.json \\\n  --root resources/platform-guests/os-guest-vms --output build/os-boot/android-result \\\n  --id android-fresh --guest android --accel tcg \\\n  --qemu /usr/bin/qemu-system-x86_64 \\\n  --timeout 1800\n"
+      }
+    ],
+    "links": [
+      {
+        "block_id": "b000021",
+        "label": "아키텍처별 게스트 안내",
+        "target": "platform-guests.md",
+        "kind": "relative",
+        "line": 21
+      },
+      {
+        "block_id": "b000053",
+        "label": "Debian 공식 cloud 이미지",
+        "target": "https://cloud.debian.org/images/cloud/trixie/20261021-2638/",
+        "kind": "external",
+        "line": 72
+      },
+      {
+        "block_id": "b000053",
+        "label": "Android-x86 9.0-r2 릴리스",
+        "target": "https://www.android-x86.org/releases/releasenote-9-0-r2.html",
+        "kind": "external",
+        "line": 72
+      },
+      {
+        "block_id": "b000053",
+        "label": "QEMU ARM virt 보드",
+        "target": "https://www.qemu.org/docs/master/system/arm/virt.html",
+        "kind": "external",
+        "line": 72
+      }
+    ],
+    "tables": []
+  },
+  "provenance": {
+    "generator": "workspace-docs",
+    "version": "1.0.0",
+    "profile": "lossless-blocks-v1",
+    "derived": true
+  }
+}

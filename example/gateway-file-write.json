@@ -1,0 +1,1 @@
+{"action":"file-write","instances":["account-a"],"file":{"path":"notes/hello.txt","offset":0,"data_base64":"SGVsbG8gZnJvbSBpaU9TCg==","truncate":true}}

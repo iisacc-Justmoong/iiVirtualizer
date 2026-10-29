@@ -2,13 +2,15 @@
 #include <array>
 #include <cerrno>
 #include <cstring>
+#include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
-// A static Linux workload for the image recipe. It runs from /data and proves
+// A static Linux workload for the image recipe. It runs inside the Society
+// Files workspace as an unprivileged user and proves
 // that the VM can host an externally reachable service with persistent data.
 int main() {
     int server=::socket(AF_INET,SOCK_STREAM|SOCK_NONBLOCK|SOCK_CLOEXEC,0);
@@ -16,8 +18,8 @@ int main() {
     int yes=1;(void)::setsockopt(server,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes));
     sockaddr_in address{};address.sin_family=AF_INET;address.sin_addr.s_addr=htonl(INADDR_ANY);address.sin_port=htons(8080);
     if(::bind(server,reinterpret_cast<sockaddr*>(&address),sizeof(address))!=0||::listen(server,16)!=0)return 2;
-    std::uint64_t boot=0;std::ifstream("/data/boot-count")>>boot;
-    const std::string body="iiOS workload via iiSDKCore; boot="+std::to_string(boot)+"\n";
+    const std::string boot=std::getenv("IIV_BOOT_COUNT")?std::getenv("IIV_BOOT_COUNT"):"0";
+    const std::string body="iiOS workload via iiSDKCore; boot="+boot+"\n";
     const std::string response="HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nConnection: close\r\nContent-Length: "+std::to_string(body.size())+"\r\n\r\n"+body;
     ii::runtime::EventLoop loop(16);
     auto task=loop.every(std::chrono::milliseconds(10),[&] {

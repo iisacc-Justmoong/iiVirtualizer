@@ -1,0 +1,470 @@
+{
+  "format": "iisacc.agent-document",
+  "schema_version": 1,
+  "document_id": "urn:iisacc:document:153ac787ab25e8e60ad4344d40fc328562b5c18e4c0982769563e56d58a92e98",
+  "project": {
+    "id": "urn:iisacc:project:SDK%2FiiVirtualizer",
+    "name": "iiVirtualizer",
+    "root": "SDK/iiVirtualizer",
+    "kind": "sdk"
+  },
+  "source": {
+    "path": "docs/README.md",
+    "sha256": "0f0ec8b64f6d41e2e6b4bc232c3500a2fdafa857e18dbb7ce19ee65b71be2ff9",
+    "bytes": 1471,
+    "line_count": 25,
+    "encoding": "utf-8",
+    "language": "en"
+  },
+  "document": {
+    "title": "iiVirtualizer Documentation",
+    "role": "overview",
+    "authority": "markdown_source"
+  },
+  "blocks": [
+    {
+      "id": "b000001",
+      "kind": "heading",
+      "start_line": 1,
+      "end_line": 1,
+      "raw": "# iiVirtualizer Documentation\n",
+      "level": 1,
+      "title": "iiVirtualizer Documentation"
+    },
+    {
+      "id": "b000002",
+      "kind": "blank",
+      "start_line": 2,
+      "end_line": 2,
+      "raw": "\n"
+    },
+    {
+      "id": "b000003",
+      "kind": "html",
+      "start_line": 3,
+      "end_line": 3,
+      "raw": "<!-- workspace-docs:document-map:start -->\n"
+    },
+    {
+      "id": "b000004",
+      "kind": "heading",
+      "start_line": 4,
+      "end_line": 4,
+      "raw": "## Human and agent document map\n",
+      "level": 2,
+      "title": "Human and agent document map"
+    },
+    {
+      "id": "b000005",
+      "kind": "blank",
+      "start_line": 5,
+      "end_line": 5,
+      "raw": "\n"
+    },
+    {
+      "id": "b000006",
+      "kind": "paragraph",
+      "start_line": 6,
+      "end_line": 6,
+      "raw": "Markdown is the maintained human source. Agent JSON is a structured, source-traceable projection.\n"
+    },
+    {
+      "id": "b000007",
+      "kind": "blank",
+      "start_line": 7,
+      "end_line": 7,
+      "raw": "\n"
+    },
+    {
+      "id": "b000008",
+      "kind": "table",
+      "start_line": 8,
+      "end_line": 24,
+      "raw": "| Document | Agent JSON |\n| --- | --- |\n| [`AGENT.md`](../AGENT.md) | [JSON](entrypoints/AGENT.agent.json) |\n| [`README.md`](../README.md) | [JSON](entrypoints/README.agent.json) |\n| [`docs/FileProvider.md`](FileProvider.md) | [JSON](FileProvider.agent.json) |\n| [`docs/architecture.md`](architecture.md) | [JSON](architecture.agent.json) |\n| [`docs/container-testing.md`](container-testing.md) | [JSON](container-testing.agent.json) |\n| [`docs/documentation-structure.md`](documentation-structure.md) | [JSON](documentation-structure.agent.json) |\n| [`docs/files-api.md`](files-api.md) | [JSON](files-api.agent.json) |\n| [`docs/filesystem.md`](filesystem.md) | [JSON](filesystem.agent.json) |\n| [`docs/gateway.md`](gateway.md) | [JSON](gateway.agent.json) |\n| [`docs/guest-build.md`](guest-build.md) | [JSON](guest-build.agent.json) |\n| [`docs/guest-os-boot.md`](guest-os-boot.md) | [JSON](guest-os-boot.agent.json) |\n| [`docs/platform-guests.md`](platform-guests.md) | [JSON](platform-guests.agent.json) |\n| [`docs/processes-api.md`](processes-api.md) | [JSON](processes-api.agent.json) |\n| [`docs/usage.md`](usage.md) | [JSON](usage.agent.json) |\n| [`docs/validation.md`](validation.md) | [JSON](validation.agent.json) |\n",
+      "columns": [
+        "Document",
+        "Agent JSON"
+      ],
+      "rows": [
+        [
+          "[`AGENT.md`](../AGENT.md)",
+          "[JSON](entrypoints/AGENT.agent.json)"
+        ],
+        [
+          "[`README.md`](../README.md)",
+          "[JSON](entrypoints/README.agent.json)"
+        ],
+        [
+          "[`docs/FileProvider.md`](FileProvider.md)",
+          "[JSON](FileProvider.agent.json)"
+        ],
+        [
+          "[`docs/architecture.md`](architecture.md)",
+          "[JSON](architecture.agent.json)"
+        ],
+        [
+          "[`docs/container-testing.md`](container-testing.md)",
+          "[JSON](container-testing.agent.json)"
+        ],
+        [
+          "[`docs/documentation-structure.md`](documentation-structure.md)",
+          "[JSON](documentation-structure.agent.json)"
+        ],
+        [
+          "[`docs/files-api.md`](files-api.md)",
+          "[JSON](files-api.agent.json)"
+        ],
+        [
+          "[`docs/filesystem.md`](filesystem.md)",
+          "[JSON](filesystem.agent.json)"
+        ],
+        [
+          "[`docs/gateway.md`](gateway.md)",
+          "[JSON](gateway.agent.json)"
+        ],
+        [
+          "[`docs/guest-build.md`](guest-build.md)",
+          "[JSON](guest-build.agent.json)"
+        ],
+        [
+          "[`docs/guest-os-boot.md`](guest-os-boot.md)",
+          "[JSON](guest-os-boot.agent.json)"
+        ],
+        [
+          "[`docs/platform-guests.md`](platform-guests.md)",
+          "[JSON](platform-guests.agent.json)"
+        ],
+        [
+          "[`docs/processes-api.md`](processes-api.md)",
+          "[JSON](processes-api.agent.json)"
+        ],
+        [
+          "[`docs/usage.md`](usage.md)",
+          "[JSON](usage.agent.json)"
+        ],
+        [
+          "[`docs/validation.md`](validation.md)",
+          "[JSON](validation.agent.json)"
+        ]
+      ]
+    },
+    {
+      "id": "b000009",
+      "kind": "html",
+      "start_line": 25,
+      "end_line": 25,
+      "raw": "<!-- workspace-docs:document-map:end -->\n"
+    }
+  ],
+  "outline": [
+    {
+      "block_id": "b000001",
+      "parent_id": null,
+      "level": 1,
+      "title": "iiVirtualizer Documentation",
+      "anchor": "iivirtualizer-documentation",
+      "start_line": 1
+    },
+    {
+      "block_id": "b000004",
+      "parent_id": "b000001",
+      "level": 2,
+      "title": "Human and agent document map",
+      "anchor": "human-and-agent-document-map",
+      "start_line": 4
+    }
+  ],
+  "indexes": {
+    "directive_candidates": [],
+    "commands": [],
+    "links": [
+      {
+        "block_id": "b000008",
+        "label": "`AGENT.md`",
+        "target": "../AGENT.md",
+        "kind": "relative",
+        "line": 10
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "entrypoints/AGENT.agent.json",
+        "kind": "relative",
+        "line": 10
+      },
+      {
+        "block_id": "b000008",
+        "label": "`README.md`",
+        "target": "../README.md",
+        "kind": "relative",
+        "line": 11
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "entrypoints/README.agent.json",
+        "kind": "relative",
+        "line": 11
+      },
+      {
+        "block_id": "b000008",
+        "label": "`docs/FileProvider.md`",
+        "target": "FileProvider.md",
+        "kind": "relative",
+        "line": 12
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "FileProvider.agent.json",
+        "kind": "relative",
+        "line": 12
+      },
+      {
+        "block_id": "b000008",
+        "label": "`docs/architecture.md`",
+        "target": "architecture.md",
+        "kind": "relative",
+        "line": 13
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "architecture.agent.json",
+        "kind": "relative",
+        "line": 13
+      },
+      {
+        "block_id": "b000008",
+        "label": "`docs/container-testing.md`",
+        "target": "container-testing.md",
+        "kind": "relative",
+        "line": 14
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "container-testing.agent.json",
+        "kind": "relative",
+        "line": 14
+      },
+      {
+        "block_id": "b000008",
+        "label": "`docs/documentation-structure.md`",
+        "target": "documentation-structure.md",
+        "kind": "relative",
+        "line": 15
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "documentation-structure.agent.json",
+        "kind": "relative",
+        "line": 15
+      },
+      {
+        "block_id": "b000008",
+        "label": "`docs/files-api.md`",
+        "target": "files-api.md",
+        "kind": "relative",
+        "line": 16
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "files-api.agent.json",
+        "kind": "relative",
+        "line": 16
+      },
+      {
+        "block_id": "b000008",
+        "label": "`docs/filesystem.md`",
+        "target": "filesystem.md",
+        "kind": "relative",
+        "line": 17
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "filesystem.agent.json",
+        "kind": "relative",
+        "line": 17
+      },
+      {
+        "block_id": "b000008",
+        "label": "`docs/gateway.md`",
+        "target": "gateway.md",
+        "kind": "relative",
+        "line": 18
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "gateway.agent.json",
+        "kind": "relative",
+        "line": 18
+      },
+      {
+        "block_id": "b000008",
+        "label": "`docs/guest-build.md`",
+        "target": "guest-build.md",
+        "kind": "relative",
+        "line": 19
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "guest-build.agent.json",
+        "kind": "relative",
+        "line": 19
+      },
+      {
+        "block_id": "b000008",
+        "label": "`docs/guest-os-boot.md`",
+        "target": "guest-os-boot.md",
+        "kind": "relative",
+        "line": 20
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "guest-os-boot.agent.json",
+        "kind": "relative",
+        "line": 20
+      },
+      {
+        "block_id": "b000008",
+        "label": "`docs/platform-guests.md`",
+        "target": "platform-guests.md",
+        "kind": "relative",
+        "line": 21
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "platform-guests.agent.json",
+        "kind": "relative",
+        "line": 21
+      },
+      {
+        "block_id": "b000008",
+        "label": "`docs/processes-api.md`",
+        "target": "processes-api.md",
+        "kind": "relative",
+        "line": 22
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "processes-api.agent.json",
+        "kind": "relative",
+        "line": 22
+      },
+      {
+        "block_id": "b000008",
+        "label": "`docs/usage.md`",
+        "target": "usage.md",
+        "kind": "relative",
+        "line": 23
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "usage.agent.json",
+        "kind": "relative",
+        "line": 23
+      },
+      {
+        "block_id": "b000008",
+        "label": "`docs/validation.md`",
+        "target": "validation.md",
+        "kind": "relative",
+        "line": 24
+      },
+      {
+        "block_id": "b000008",
+        "label": "JSON",
+        "target": "validation.agent.json",
+        "kind": "relative",
+        "line": 24
+      }
+    ],
+    "tables": [
+      {
+        "block_id": "b000008",
+        "columns": [
+          "Document",
+          "Agent JSON"
+        ],
+        "rows": [
+          [
+            "[`AGENT.md`](../AGENT.md)",
+            "[JSON](entrypoints/AGENT.agent.json)"
+          ],
+          [
+            "[`README.md`](../README.md)",
+            "[JSON](entrypoints/README.agent.json)"
+          ],
+          [
+            "[`docs/FileProvider.md`](FileProvider.md)",
+            "[JSON](FileProvider.agent.json)"
+          ],
+          [
+            "[`docs/architecture.md`](architecture.md)",
+            "[JSON](architecture.agent.json)"
+          ],
+          [
+            "[`docs/container-testing.md`](container-testing.md)",
+            "[JSON](container-testing.agent.json)"
+          ],
+          [
+            "[`docs/documentation-structure.md`](documentation-structure.md)",
+            "[JSON](documentation-structure.agent.json)"
+          ],
+          [
+            "[`docs/files-api.md`](files-api.md)",
+            "[JSON](files-api.agent.json)"
+          ],
+          [
+            "[`docs/filesystem.md`](filesystem.md)",
+            "[JSON](filesystem.agent.json)"
+          ],
+          [
+            "[`docs/gateway.md`](gateway.md)",
+            "[JSON](gateway.agent.json)"
+          ],
+          [
+            "[`docs/guest-build.md`](guest-build.md)",
+            "[JSON](guest-build.agent.json)"
+          ],
+          [
+            "[`docs/guest-os-boot.md`](guest-os-boot.md)",
+            "[JSON](guest-os-boot.agent.json)"
+          ],
+          [
+            "[`docs/platform-guests.md`](platform-guests.md)",
+            "[JSON](platform-guests.agent.json)"
+          ],
+          [
+            "[`docs/processes-api.md`](processes-api.md)",
+            "[JSON](processes-api.agent.json)"
+          ],
+          [
+            "[`docs/usage.md`](usage.md)",
+            "[JSON](usage.agent.json)"
+          ],
+          [
+            "[`docs/validation.md`](validation.md)",
+            "[JSON](validation.agent.json)"
+          ]
+        ]
+      }
+    ]
+  },
+  "provenance": {
+    "generator": "workspace-docs",
+    "version": "1.0.0",
+    "profile": "lossless-blocks-v1",
+    "derived": true
+  }
+}

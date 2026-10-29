@@ -1,0 +1,332 @@
+{
+  "format": "iisacc.agent-document",
+  "schema_version": 1,
+  "document_id": "urn:iisacc:document:90c810a181df2039f148f2862f4f703534f6d82b65a184796d9f6ef698f67557",
+  "project": {
+    "id": "urn:iisacc:project:SDK%2FiiVirtualizer",
+    "name": "iiVirtualizer",
+    "root": "SDK/iiVirtualizer",
+    "kind": "sdk"
+  },
+  "source": {
+    "path": "AGENT.md",
+    "sha256": "7427b2fd91195f5088e1d55351b025e210a9326bfba556641a3cad701770eca6",
+    "bytes": 4426,
+    "line_count": 33,
+    "encoding": "utf-8",
+    "language": "ko"
+  },
+  "document": {
+    "title": "iiVirtualizer 작업 지침",
+    "role": "instructions",
+    "authority": "markdown_source"
+  },
+  "blocks": [
+    {
+      "id": "b000001",
+      "kind": "heading",
+      "start_line": 1,
+      "end_line": 1,
+      "raw": "# iiVirtualizer 작업 지침\n",
+      "level": 1,
+      "title": "iiVirtualizer 작업 지침"
+    },
+    {
+      "id": "b000002",
+      "kind": "blank",
+      "start_line": 2,
+      "end_line": 2,
+      "raw": "\n"
+    },
+    {
+      "id": "b000003",
+      "kind": "paragraph",
+      "start_line": 3,
+      "end_line": 3,
+      "raw": "C++23, 표준 라이브러리와 iiSDK 공개 API를 사용한다. 호스트 VM 제어와 Linux 게스트의 부팅 책임을 분리한다. 가상화 백엔드는 인스턴스에 주입하는 함수 계약으로 교체한다. Qt와 셸 명령 문자열 실행을 추가하지 않는다.\n"
+    },
+    {
+      "id": "b000004",
+      "kind": "blank",
+      "start_line": 4,
+      "end_line": 4,
+      "raw": "\n"
+    },
+    {
+      "id": "b000005",
+      "kind": "paragraph",
+      "start_line": 5,
+      "end_line": 5,
+      "raw": "SDK 소스와 같은 이름의 헤더는 src/iiVirtualizer/에 함께 둔다. 게스트 프로그램은 src/guest/에 둔다. README.md는 영어, docs/는 한국어로 작성한다. 소스 수정에는 테스트와 문서 갱신이 따른다. 빌드와 검증 증거는 build/에, 실행에 필요한 이미지·펌웨어와 지속할 게스트 상태는 resources/에 둔다. 다른 SDK의 기존 빌드나 설치본을 덮어쓰지 않는다.\n"
+    },
+    {
+      "id": "b000006",
+      "kind": "blank",
+      "start_line": 6,
+      "end_line": 6,
+      "raw": "\n"
+    },
+    {
+      "id": "b000007",
+      "kind": "paragraph",
+      "start_line": 7,
+      "end_line": 7,
+      "raw": "인스턴스 삭제는 해당 인스턴스의 정지와 소유 메타데이터 확인 후에만 허용한다. 프로세스 번호만으로 다른 프로세스를 종료하지 않는다. QMP의 인스턴스 UUID와 응답 ID를 확인한다. 가속기 부팅, 에뮬레이션 부팅, 모의 백엔드 검증을 구분하여 기록한다.\n"
+    },
+    {
+      "id": "b000008",
+      "kind": "blank",
+      "start_line": 8,
+      "end_line": 8,
+      "raw": "\n"
+    },
+    {
+      "id": "b000009",
+      "kind": "paragraph",
+      "start_line": 9,
+      "end_line": 9,
+      "raw": "가상머신을 실제로 시작하는 모든 테스트는 자원 제한이 있는 전용 Linux 컨테이너 안에서만 수행한다. 호스트에서 QEMU나 테스트 VM을 직접 시작하지 않는다. 테스트 컨테이너에는 가속 장치나 사용자 전체 작업공간을 넘기지 않고 전용 입력과 출력만 연결하며, QEMU TCG를 명시한다. 컨테이너의 기반 가상화와 외장 저장소는 여전히 호스트에 영향을 줄 수 있으므로 실행 결과를 별도로 기록한다.\n"
+    },
+    {
+      "id": "b000010",
+      "kind": "blank",
+      "start_line": 10,
+      "end_line": 10,
+      "raw": "\n"
+    },
+    {
+      "id": "b000011",
+      "kind": "paragraph",
+      "start_line": 11,
+      "end_line": 11,
+      "raw": "VM 파일 API는 Files 상대 경로·작업별 계정 권한·VM 상태·게스트 UUID/요청 ID를 검증한다. 실제 내용 I/O는 Files만 연결한 비특권 게스트 처리기에서 수행하며 PID 1이나 호스트의 RAW 볼륨 접근으로 우회하지 않는다. 링크를 따라가지 않는 descriptor 기준 탐색, 생성·이동 충돌 거부, 제한된 청크·페이지와 실패 시 실행 거부를 유지한다.\n"
+    },
+    {
+      "id": "b000012",
+      "kind": "blank",
+      "start_line": 12,
+      "end_line": 12,
+      "raw": "\n"
+    },
+    {
+      "id": "b000013",
+      "kind": "paragraph",
+      "start_line": 13,
+      "end_line": 13,
+      "raw": "VM 프로세스는 PID 1의 단일 소유 감독기와 iiSDK Process·비차단 Channel을 사용한다. 게이트웨이는 임의 PID를 제어하지 않으며 부팅별 핸들·실행 키·작업별 권한을 확인한다. Files 실행 파일은 격리·권한 제거 후에만 읽고 실행한다. cgroup 준비 실패 시 실행을 거부하고, 그룹을 벗어난 자식도 전용 cgroup으로 정리한다. 입력 큐·독립 출력 링·페이지·실행/보존 개수와 EventLoop 펌프 예산을 유지한다. `VmClient`의 동기 RPC 주기와 executor는 앱이 소유한다.\n"
+    },
+    {
+      "id": "b000014",
+      "kind": "blank",
+      "start_line": 14,
+      "end_line": 14,
+      "raw": "\n"
+    },
+    {
+      "id": "b000015",
+      "kind": "paragraph",
+      "start_line": 15,
+      "end_line": 15,
+      "raw": "앱 환경변수를 권한 있는 실행 보조 프로그램에 직접 전달하지 않는다. 내부 payload에 담아 검증하고 격리·권한 제거 후에만 앱 환경으로 적용한다. 보조 프로그램의 libc 시작에 사용자 loader·allocator·locale 환경이 관여하는 경로를 추가하지 않는다.\n"
+    },
+    {
+      "id": "b000016",
+      "kind": "blank",
+      "start_line": 16,
+      "end_line": 16,
+      "raw": "\n"
+    },
+    {
+      "id": "b000017",
+      "kind": "html",
+      "start_line": 17,
+      "end_line": 17,
+      "raw": "<!-- workspace-docs:agent:start -->\n"
+    },
+    {
+      "id": "b000018",
+      "kind": "heading",
+      "start_line": 18,
+      "end_line": 18,
+      "raw": "## 문서 구조와 에이전트 탐색\n",
+      "level": 2,
+      "title": "문서 구조와 에이전트 탐색"
+    },
+    {
+      "id": "b000019",
+      "kind": "blank",
+      "start_line": 19,
+      "end_line": 19,
+      "raw": "\n"
+    },
+    {
+      "id": "b000020",
+      "kind": "list",
+      "start_line": 20,
+      "end_line": 26,
+      "raw": "- 프로젝트 루트의 `README.md`는 사람용 영문 진입 문서이며 `AGENT.md`는 에이전트 진입점이다.\n- 하위 인간용 Markdown과 구조화된 agent JSON을 함께 유지한다. Markdown이 원본이며 JSON은 원문 해시와 줄 범위를 가진 파생 문서이다.\n- 먼저 [docs/agent-index.json](docs/agent-index.json)에서 관련 문서와 JSON 투영을 찾는다. 원문 SHA-256이 다르면 현재 Markdown을 읽고 투영을 갱신한다.\n- JSON의 규칙 후보는 검색용 어휘 일치 결과이다. 과거 기록·예제·실패 상태를 현재 지시나 검증 완료로 자동 해석하지 않는다.\n- 기존 프로젝트별 규칙, 동결된 증거, 라이선스, 외부 원본, 사용자 데이터와 다른 작업의 변경을 보존한다.\n- 이 문서 재편 지침은 과거 작업의 기능 구현·배포를 자동 재개하라는 요청이 아니다. 현재 사용자의 작업 범위를 우선한다.\n- 문서를 수정하면 JSON 쌍·색인을 함께 갱신하고 검증한다. 기존 소스 변경에 대한 빌드·테스트 규칙은 계속 따른다.\n",
+      "items": [
+        {
+          "marker": "-",
+          "text": "프로젝트 루트의 `README.md`는 사람용 영문 진입 문서이며 `AGENT.md`는 에이전트 진입점이다.",
+          "checked": null
+        },
+        {
+          "marker": "-",
+          "text": "하위 인간용 Markdown과 구조화된 agent JSON을 함께 유지한다. Markdown이 원본이며 JSON은 원문 해시와 줄 범위를 가진 파생 문서이다.",
+          "checked": null
+        },
+        {
+          "marker": "-",
+          "text": "먼저 [docs/agent-index.json](docs/agent-index.json)에서 관련 문서와 JSON 투영을 찾는다. 원문 SHA-256이 다르면 현재 Markdown을 읽고 투영을 갱신한다.",
+          "checked": null
+        },
+        {
+          "marker": "-",
+          "text": "JSON의 규칙 후보는 검색용 어휘 일치 결과이다. 과거 기록·예제·실패 상태를 현재 지시나 검증 완료로 자동 해석하지 않는다.",
+          "checked": null
+        },
+        {
+          "marker": "-",
+          "text": "기존 프로젝트별 규칙, 동결된 증거, 라이선스, 외부 원본, 사용자 데이터와 다른 작업의 변경을 보존한다.",
+          "checked": null
+        },
+        {
+          "marker": "-",
+          "text": "이 문서 재편 지침은 과거 작업의 기능 구현·배포를 자동 재개하라는 요청이 아니다. 현재 사용자의 작업 범위를 우선한다.",
+          "checked": null
+        },
+        {
+          "marker": "-",
+          "text": "문서를 수정하면 JSON 쌍·색인을 함께 갱신하고 검증한다. 기존 소스 변경에 대한 빌드·테스트 규칙은 계속 따른다.",
+          "checked": null
+        }
+      ]
+    },
+    {
+      "id": "b000021",
+      "kind": "blank",
+      "start_line": 27,
+      "end_line": 27,
+      "raw": "\n"
+    },
+    {
+      "id": "b000022",
+      "kind": "paragraph",
+      "start_line": 28,
+      "end_line": 28,
+      "raw": "Workspace에서 이 프로젝트의 문서를 갱신하는 명령은 다음과 같다.\n"
+    },
+    {
+      "id": "b000023",
+      "kind": "blank",
+      "start_line": 29,
+      "end_line": 29,
+      "raw": "\n"
+    },
+    {
+      "id": "b000024",
+      "kind": "fenced_code",
+      "start_line": 30,
+      "end_line": 32,
+      "raw": "```sh\npython3 ../../Engineering/WorkspaceDocumentation/App/workspace_docs.py --workspace ../.. sync --project SDK/iiVirtualizer\n```\n",
+      "language": "sh",
+      "code": "python3 ../../Engineering/WorkspaceDocumentation/App/workspace_docs.py --workspace ../.. sync --project SDK/iiVirtualizer\n",
+      "closed": true
+    },
+    {
+      "id": "b000025",
+      "kind": "html",
+      "start_line": 33,
+      "end_line": 33,
+      "raw": "<!-- workspace-docs:agent:end -->\n"
+    }
+  ],
+  "outline": [
+    {
+      "block_id": "b000001",
+      "parent_id": null,
+      "level": 1,
+      "title": "iiVirtualizer 작업 지침",
+      "anchor": "iivirtualizer-작업-지침",
+      "start_line": 1
+    },
+    {
+      "block_id": "b000018",
+      "parent_id": "b000001",
+      "level": 2,
+      "title": "문서 구조와 에이전트 탐색",
+      "anchor": "문서-구조와-에이전트-탐색",
+      "start_line": 18
+    }
+  ],
+  "indexes": {
+    "directive_candidates": [
+      {
+        "block_id": "b000003",
+        "line": 3,
+        "text": "C++23, 표준 라이브러리와 iiSDK 공개 API를 사용한다. 호스트 VM 제어와 Linux 게스트의 부팅 책임을 분리한다. 가상화 백엔드는 인스턴스에 주입하는 함수 계약으로 교체한다. Qt와 셸 명령 문자열 실행을 추가하지 않는다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000007",
+        "line": 7,
+        "text": "인스턴스 삭제는 해당 인스턴스의 정지와 소유 메타데이터 확인 후에만 허용한다. 프로세스 번호만으로 다른 프로세스를 종료하지 않는다. QMP의 인스턴스 UUID와 응답 ID를 확인한다. 가속기 부팅, 에뮬레이션 부팅, 모의 백엔드 검증을 구분하여 기록한다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000009",
+        "line": 9,
+        "text": "가상머신을 실제로 시작하는 모든 테스트는 자원 제한이 있는 전용 Linux 컨테이너 안에서만 수행한다. 호스트에서 QEMU나 테스트 VM을 직접 시작하지 않는다. 테스트 컨테이너에는 가속 장치나 사용자 전체 작업공간을 넘기지 않고 전용 입력과 출력만 연결하며, QEMU TCG를 명시한다. 컨테이너의 기반 가상화와 외장 저장소는 여전히 호스트에 영향을 줄 수 있으므로 실행 결과를 별도로 기록한다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000011",
+        "line": 11,
+        "text": "VM 파일 API는 Files 상대 경로·작업별 계정 권한·VM 상태·게스트 UUID/요청 ID를 검증한다. 실제 내용 I/O는 Files만 연결한 비특권 게스트 처리기에서 수행하며 PID 1이나 호스트의 RAW 볼륨 접근으로 우회하지 않는다. 링크를 따라가지 않는 descriptor 기준 탐색, 생성·이동 충돌 거부, 제한된 청크·페이지와 실패 시 실행 거부를 유지한다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000015",
+        "line": 15,
+        "text": "앱 환경변수를 권한 있는 실행 보조 프로그램에 직접 전달하지 않는다. 내부 payload에 담아 검증하고 격리·권한 제거 후에만 앱 환경으로 적용한다. 보조 프로그램의 libc 시작에 사용자 loader·allocator·locale 환경이 관여하는 경로를 추가하지 않는다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000020",
+        "line": 23,
+        "text": "- JSON의 규칙 후보는 검색용 어휘 일치 결과이다. 과거 기록·예제·실패 상태를 현재 지시나 검증 완료로 자동 해석하지 않는다.",
+        "basis": "lexical_match",
+        "context": "list"
+      }
+    ],
+    "commands": [
+      {
+        "block_id": "b000024",
+        "language": "sh",
+        "code": "python3 ../../Engineering/WorkspaceDocumentation/App/workspace_docs.py --workspace ../.. sync --project SDK/iiVirtualizer\n"
+      }
+    ],
+    "links": [
+      {
+        "block_id": "b000020",
+        "label": "docs/agent-index.json",
+        "target": "docs/agent-index.json",
+        "kind": "relative",
+        "line": 22
+      }
+    ],
+    "tables": []
+  },
+  "provenance": {
+    "generator": "workspace-docs",
+    "version": "1.0.0",
+    "profile": "lossless-blocks-v1",
+    "derived": true
+  }
+}

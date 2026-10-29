@@ -1,0 +1,4 @@
+{
+  "action": "create",
+  "create": {"id":"account-a","image":"iios-arm64","cpus":2,"memory_mib":512,"disk_mib":128,"network":false}
+}

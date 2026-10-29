@@ -1,0 +1,9 @@
+{
+  "action": "process-stat",
+  "instances": [
+    "account-a"
+  ],
+  "process": {
+    "id": "RETURNED_HANDLE"
+  }
+}

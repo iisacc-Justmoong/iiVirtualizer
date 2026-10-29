@@ -34,10 +34,13 @@ static void help() {
         "Commands: doctor, create, list, describe, start, pause, resume, stop, remove,\n"
         "          guest-info, wait-ready, console, plan\n"
         "          start-many, describe-many, pause-many, resume-many, stop-many\n"
-        "Global: --root PATH --qemu-aarch64 PATH --qemu-x86_64 PATH --workers N\n"
+        "Global: --root PATH --qemu-aarch64 PATH --qemu-x86_64 PATH --workers N --startup-timeout SECONDS --control-timeout SECONDS\n"
         "Create: --kernel PATH --initramfs PATH [--arch aarch64|x86_64]\n"
-        "        [--accel auto|hvf|kvm|tcg] [--cpus N] [--memory MiB] [--disk MiB]\n"
-        "        [--base-disk RAW] [--network] [--forward HOST:GUEST]\n"
+        "        [--accel auto|hvf|kvm|tcg] [--cpus N] [--cpu-model MODEL] [--memory MiB] [--disk MiB]\n"
+        "        [--base-disk RAW] [--clone-base] [--network] [--forward HOST:GUEST]\n"
+        "        [--kernel-args TEXT] [--graphics none|virtio-gpu|vga|ramfb]\n"
+        "        [--boot kernel|disk] [--boot-iso ISO] [--payload-iso ISO] [--firmware FILE] [--firmware-vars FILE]\n"
+        "        [--disk-bus virtio|sata|nvme] [--guest-channel virtio|serial] [--allow-reboot] [--external-tpm] [--boot-disk-first]\n"
         "Stop:   [--force] [--timeout SECONDS]\n"
         "Ready:  [--timeout SECONDS]\n";
 }
@@ -59,18 +62,34 @@ int main(int argc,char** argv) {
             if(key!="--forward"&&!seen.insert(key).second)throw std::invalid_argument("Duplicate option: "+key);
             if(key=="--force") {if(command!="stop"&&command!="stop-many")throw std::invalid_argument("--force is only valid for stop or stop-many");force=true;continue;}
             if(key=="--network") {if(command!="create")throw std::invalid_argument("--network is only valid for create");spec.network=true;continue;}
+            if(key=="--allow-reboot") {if(command!="create")throw std::invalid_argument("--allow-reboot is only valid for create");spec.allow_reboot=true;continue;}
+            if(key=="--boot-disk-first") {if(command!="create")throw std::invalid_argument("--boot-disk-first is only valid for create");spec.boot_disk_first=true;continue;}
+            if(key=="--external-tpm") {if(command!="create")throw std::invalid_argument("--external-tpm is only valid for create");spec.external_tpm=true;continue;}
+            if(key=="--clone-base") {if(command!="create")throw std::invalid_argument("--clone-base is only valid for create");spec.clone_base_disk=true;continue;}
             if(i+1>=argc)throw std::invalid_argument("Missing value for "+key);
             std::string value=argv[++i];
             if(key=="--root")root=value;
             else if(key=="--qemu-aarch64")engine.aarch64_executable=value;
             else if(key=="--qemu-x86_64")engine.x86_64_executable=value;
+            else if(key=="--startup-timeout") {auto n=number(value);if(n<1||n>3600)throw std::invalid_argument("Startup timeout must be 1..3600 seconds");engine.startup_timeout=std::chrono::seconds(n);}
+            else if(key=="--control-timeout") {auto n=number(value);if(n<1||n>3600)throw std::invalid_argument("Control timeout must be 1..3600 seconds");engine.timeout=std::chrono::seconds(n);}
             else if(key=="--workers") {auto n=number(value);if(n<1||n>256)throw std::invalid_argument("Worker count must be 1..256");runtime_options.workers=static_cast<std::size_t>(n);}
             else if(key=="--timeout") {if(command!="stop"&&command!="stop-many"&&command!="wait-ready")throw std::invalid_argument("--timeout requires stop, stop-many or wait-ready");timeout=number(value);if(timeout>3600)throw std::invalid_argument("Timeout exceeds one hour");}
             else {
                 if(command!="create")throw std::invalid_argument("Create option used with "+command+": "+key);
                 if(key=="--kernel")spec.kernel=v::fs::absolute(value);
+                else if(key=="--cpu-model") {if(value.empty())throw std::invalid_argument("CPU model cannot be empty");spec.cpu_model=value;}
                 else if(key=="--initramfs")spec.initramfs=v::fs::absolute(value);
                 else if(key=="--base-disk")spec.base_disk=v::fs::absolute(value);
+                else if(key=="--kernel-args")spec.kernel_command_line=value;
+                else if(key=="--boot-iso")spec.boot_iso=v::fs::absolute(value);
+                else if(key=="--payload-iso")spec.payload_iso=v::fs::absolute(value);
+                else if(key=="--firmware")spec.firmware=v::fs::absolute(value);
+                else if(key=="--firmware-vars")spec.firmware_vars=v::fs::absolute(value);
+                else if(key=="--boot") {if(value=="kernel")spec.boot_mode=v::BootMode::kernel;else if(value=="disk")spec.boot_mode=v::BootMode::disk;else throw std::invalid_argument("Unknown boot mode");}
+                else if(key=="--disk-bus") {if(value=="virtio")spec.disk_bus=v::DiskBus::virtio;else if(value=="sata")spec.disk_bus=v::DiskBus::sata;else if(value=="nvme")spec.disk_bus=v::DiskBus::nvme;else throw std::invalid_argument("Unknown disk bus");}
+                else if(key=="--guest-channel") {if(value=="virtio")spec.guest_channel=v::GuestChannel::virtio;else if(value=="serial")spec.guest_channel=v::GuestChannel::serial;else throw std::invalid_argument("Unknown guest channel");}
+                else if(key=="--graphics") {if(value=="none")spec.graphics=v::Graphics::none;else if(value=="virtio-gpu")spec.graphics=v::Graphics::virtio_gpu;else if(value=="vga")spec.graphics=v::Graphics::vga;else if(value=="ramfb")spec.graphics=v::Graphics::ramfb;else throw std::invalid_argument("Unknown graphics device");}
                 else if(key=="--cpus"||key=="--memory") {auto n=number(value);if(n>1048576)throw std::invalid_argument("Resource limit exceeded");if(key=="--cpus")spec.cpus=static_cast<unsigned>(n);else spec.memory_mib=static_cast<unsigned>(n);}
                 else if(key=="--disk")spec.disk_mib=number(value);
                 else if(key=="--arch") {if(value=="aarch64")spec.architecture=v::Architecture::aarch64;else if(value=="x86_64")spec.architecture=v::Architecture::x86_64;else throw std::invalid_argument("Unknown architecture");}

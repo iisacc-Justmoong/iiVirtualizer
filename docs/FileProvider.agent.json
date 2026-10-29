@@ -1,0 +1,150 @@
+{
+  "format": "iisacc.agent-document",
+  "schema_version": 1,
+  "document_id": "urn:iisacc:document:4928a095c2c85e15dde17c18af8aedee1aabad616ed795339a1e6470162c6099",
+  "project": {
+    "id": "urn:iisacc:project:SDK%2FiiVirtualizer",
+    "name": "iiVirtualizer",
+    "root": "SDK/iiVirtualizer",
+    "kind": "sdk"
+  },
+  "source": {
+    "path": "docs/FileProvider.md",
+    "sha256": "47bfc7aac137bac3b726aa751f815fb28beaec28f68dc003145fc74670305792",
+    "bytes": 2144,
+    "line_count": 11,
+    "encoding": "utf-8",
+    "language": "ko"
+  },
+  "document": {
+    "title": "파일 생성 경계",
+    "role": "guide",
+    "authority": "markdown_source"
+  },
+  "blocks": [
+    {
+      "id": "b000001",
+      "kind": "heading",
+      "start_line": 1,
+      "end_line": 1,
+      "raw": "# 파일 생성 경계\n",
+      "level": 1,
+      "title": "파일 생성 경계"
+    },
+    {
+      "id": "b000002",
+      "kind": "blank",
+      "start_line": 2,
+      "end_line": 2,
+      "raw": "\n"
+    },
+    {
+      "id": "b000003",
+      "kind": "paragraph",
+      "start_line": 3,
+      "end_line": 3,
+      "raw": "호스트의 저장소·스테이징·잠금 파일·커널과 initramfs 복사·RAW 디스크·manifest 공개는 기본적으로 iiFileProvider Native API를 거친다. `--clone-base`를 명시한 macOS 생성만 예외로, 인스턴스 전용 스테이징 디렉터리에 APFS 등의 copy-on-write 복제를 먼저 시도한다. 실패하거나 다른 OS이면 기존 제공자 복사로 돌아간다. 게스트가 복제본에 쓴 내용은 원본 이미지에 반영되지 않지만, 파일시스템은 원본의 ctime을 갱신할 수 있다. 기존 비차단 flock, O_NOFOLLOW, 디렉터리 권한, manifest fsync 및 완성된 디렉터리의 이름 교체 계약은 유지한다.\n"
+    },
+    {
+      "id": "b000004",
+      "kind": "blank",
+      "start_line": 4,
+      "end_line": 4,
+      "raw": "\n"
+    },
+    {
+      "id": "b000005",
+      "kind": "paragraph",
+      "start_line": 5,
+      "end_line": 5,
+      "raw": "Linux 게스트도 마운트 지점과 boot-count를 동일한 제공자로 생성한다. 게스트 CMake는 Native 제공자를 정적으로 포함하며, 대상용 SQLite 소스를 함께 빌드한다. 교차 컴파일 도구 체인은 C와 C++ 컴파일러·대상·sysroot를 모두 지정해야 한다. 런타임에 Qt나 별도 인터프리터를 추가하지 않는다.\n"
+    },
+    {
+      "id": "b000006",
+      "kind": "blank",
+      "start_line": 6,
+      "end_line": 6,
+      "raw": "\n"
+    },
+    {
+      "id": "b000007",
+      "kind": "paragraph",
+      "start_line": 7,
+      "end_line": 7,
+      "raw": "0.4.0에서는 작업 폴더·HOME·임시 파일과 부팅 메타데이터를 `.societycontainer` 내부에 생성한다. 제공자의 API를 사용하지 않는 직접 파일 호출도 [게스트 파일시스템 경계](filesystem.md)의 읽기 전용 루트·권한·seccomp 정책을 따른다.\n"
+    },
+    {
+      "id": "b000008",
+      "kind": "blank",
+      "start_line": 8,
+      "end_line": 8,
+      "raw": "\n"
+    },
+    {
+      "id": "b000009",
+      "kind": "paragraph",
+      "start_line": 9,
+      "end_line": 9,
+      "raw": "0.5.0의 파일 처리기는 iiFileProvider Native의 descriptor 기반 열기·디렉터리 생성 API를 사용한다. POSIX의 `fstatat`, `pread`·`pwrite`, `renameat2`와 `unlinkat`는 같은 descriptor 경계 안에서 메타데이터·청크·원자적 충돌 거부·링크 자체 삭제를 구현한다. 실제 내용 I/O 전에 Files만 데이터 마운트로 연결하고 권한과 syscall을 제한한다. 공개 요청·한도·부분 기록의 의미는 [Files API](files-api.md)에 정의한다.\n"
+    },
+    {
+      "id": "b000010",
+      "kind": "blank",
+      "start_line": 10,
+      "end_line": 10,
+      "raw": "\n"
+    },
+    {
+      "id": "b000011",
+      "kind": "paragraph",
+      "start_line": 11,
+      "end_line": 11,
+      "raw": "`iiVirtualizer.ProviderStorage`는 한국어 상위 경로, 원본 보존 복사, RAW 볼륨 크기, 중복 생성 거부와 파일로 막힌 상위 경로를 검사한다. 게스트 부팅 검사는 빌드 검사와 별도로 수행한다.\n"
+    }
+  ],
+  "outline": [
+    {
+      "block_id": "b000001",
+      "parent_id": null,
+      "level": 1,
+      "title": "파일 생성 경계",
+      "anchor": "파일-생성-경계",
+      "start_line": 1
+    }
+  ],
+  "indexes": {
+    "directive_candidates": [
+      {
+        "block_id": "b000005",
+        "line": 5,
+        "text": "Linux 게스트도 마운트 지점과 boot-count를 동일한 제공자로 생성한다. 게스트 CMake는 Native 제공자를 정적으로 포함하며, 대상용 SQLite 소스를 함께 빌드한다. 교차 컴파일 도구 체인은 C와 C++ 컴파일러·대상·sysroot를 모두 지정해야 한다. 런타임에 Qt나 별도 인터프리터를 추가하지 않는다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      }
+    ],
+    "commands": [],
+    "links": [
+      {
+        "block_id": "b000007",
+        "label": "게스트 파일시스템 경계",
+        "target": "filesystem.md",
+        "kind": "relative",
+        "line": 7
+      },
+      {
+        "block_id": "b000009",
+        "label": "Files API",
+        "target": "files-api.md",
+        "kind": "relative",
+        "line": 9
+      }
+    ],
+    "tables": []
+  },
+  "provenance": {
+    "generator": "workspace-docs",
+    "version": "1.0.0",
+    "profile": "lossless-blocks-v1",
+    "derived": true
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "action": "process-write",
+  "instances": [
+    "account-a"
+  ],
+  "process": {
+    "id": "RETURNED_HANDLE",
+    "offset": 0,
+    "data_base64": "aW5wdXQK"
+  }
+}

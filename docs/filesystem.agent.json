@@ -1,0 +1,469 @@
+{
+  "format": "iisacc.agent-document",
+  "schema_version": 1,
+  "document_id": "urn:iisacc:document:8fd7c81b513e236358993f1d5b1755e449339ebffecce19700e5bf5a658793c1",
+  "project": {
+    "id": "urn:iisacc:project:SDK%2FiiVirtualizer",
+    "name": "iiVirtualizer",
+    "root": "SDK/iiVirtualizer",
+    "kind": "sdk"
+  },
+  "source": {
+    "path": "docs/filesystem.md",
+    "sha256": "4315049d5c76c6283b74dc3f50b80d70c1bc7a60048c6574e3e7b08a1075c22a",
+    "bytes": 7655,
+    "line_count": 41,
+    "encoding": "utf-8",
+    "language": "ko"
+  },
+  "document": {
+    "title": "게스트 작업 파일시스템 경계",
+    "role": "guide",
+    "authority": "markdown_source"
+  },
+  "blocks": [
+    {
+      "id": "b000001",
+      "kind": "heading",
+      "start_line": 1,
+      "end_line": 1,
+      "raw": "# 게스트 작업 파일시스템 경계\n",
+      "level": 1,
+      "title": "게스트 작업 파일시스템 경계"
+    },
+    {
+      "id": "b000002",
+      "kind": "blank",
+      "start_line": 2,
+      "end_line": 2,
+      "raw": "\n"
+    },
+    {
+      "id": "b000003",
+      "kind": "paragraph",
+      "start_line": 3,
+      "end_line": 3,
+      "raw": "iiOS 0.4.0의 외부 워크로드는 `society-v1` 프로파일에서만 실행한다. 영속 작업 데이터는 각 VM의 ext4 볼륨에 있는 `/data/Society.societycontainer/Files`에 둔다. `HOME`과 `TMPDIR`도 그 안의 `.home`·`.tmp`를 가리킨다. 컨테이너의 패키지 루트와 `.ii-runtime`은 부팅 관리자가 소유한다. 워크로드는 Files 내부를 변경할 수 있다.\n"
+    },
+    {
+      "id": "b000004",
+      "kind": "blank",
+      "start_line": 4,
+      "end_line": 4,
+      "raw": "\n"
+    },
+    {
+      "id": "b000005",
+      "kind": "paragraph",
+      "start_line": 5,
+      "end_line": 5,
+      "raw": "0.5.0은 같은 경계를 파일 관리용 프로세스에도 적용하며 데이터 마운트를 Files 디렉터리 자체로 좁힌다. 관리 메타데이터와 다른 컨테이너 섹션을 작업 실행 루트에 노출하지 않고 Files 밖과 연결된 하드링크도 부팅 준비에서 거부한다. 원격 파일 작업의 공개 계약은 [Files API](files-api.md)에 있다.\n"
+    },
+    {
+      "id": "b000006",
+      "kind": "blank",
+      "start_line": 6,
+      "end_line": 6,
+      "raw": "\n"
+    },
+    {
+      "id": "b000007",
+      "kind": "heading",
+      "start_line": 7,
+      "end_line": 7,
+      "raw": "## 강제 방법\n",
+      "level": 2,
+      "title": "강제 방법"
+    },
+    {
+      "id": "b000008",
+      "kind": "blank",
+      "start_line": 8,
+      "end_line": 8,
+      "raw": "\n"
+    },
+    {
+      "id": "b000009",
+      "kind": "paragraph",
+      "start_line": 9,
+      "end_line": 9,
+      "raw": "신뢰하는 PID 1이 장치·네트워크·데이터 볼륨을 준비하고 iiSocietyContainer의 Qt 독립 `DirectoryStorage`로 실제 디렉터리 패키지를 생성·검사한다. 단순히 확장자가 일치하는 경로를 허용하지 않는다. 컨테이너·Files·HOME·TMPDIR·상태 디렉터리가 심볼릭 링크나 경로 우회이면 실행하지 않는다. 기존 패키지의 일반 파일 하드링크는 모든 이름이 패키지 안에 있는지 검사하며, 0.5.0부터 Files 경계도 별도로 검사한다. 외부 이름과 inode를 공유하거나 검사 항목이 100만 개를 넘으면 거부한다. Files 내부 하드링크는 유지하고 Files와 관리 메타데이터를 연결하는 하드링크는 거부한다.\n"
+    },
+    {
+      "id": "b000010",
+      "kind": "blank",
+      "start_line": 10,
+      "end_line": 10,
+      "raw": "\n"
+    },
+    {
+      "id": "b000011",
+      "kind": "paragraph",
+      "start_line": 11,
+      "end_line": 11,
+      "raw": "PID 1은 `/app/service`를 직접 실행하지 않고 정적 Linux 부팅 보조 프로그램 `ii-workload`를 iiSDKCore Process로 실행한다. 보조 프로그램은 별도 마운트 namespace를 만들고 전파를 private으로 바꾼다. 읽기 전용 tmpfs 실행 루트에 실행 파일·OS 식별·DNS 설정만 읽기 전용으로 연결하고, 준비한 `.societycontainer/Files`만 `nosuid,nodev` 데이터 마운트로 연결한다. `/dev/null`은 표준 입출력 API를 위한 고정된 폐기 장치이다. 원시 디스크·호스트 공유 디렉터리·`/proc`·`/sys`는 이 실행 루트에 노출하지 않는다.\n"
+    },
+    {
+      "id": "b000012",
+      "kind": "blank",
+      "start_line": 12,
+      "end_line": 12,
+      "raw": "\n"
+    },
+    {
+      "id": "b000013",
+      "kind": "paragraph",
+      "start_line": 13,
+      "end_line": 13,
+      "raw": "`chroot` 뒤 현재 디렉터리도 Files로 옮긴다. UID/GID는 1000으로 고정하고 보조 그룹, effective/permitted/inheritable·ambient·bounding capabilities를 제거한다. `no_new_privs`와 securebits를 잠그고 core dump를 금지하며 0·1·2를 제외한 상속 descriptor를 닫는다. 이후 아키텍처를 확인하는 seccomp 필터로 마운트·chroot·namespace 재구성·장치 생성·파일 핸들 우회·외부 descriptor 가져오기·ptrace·커널 모듈·콘솔 ioctl 등을 차단한다. clone3는 ENOSYS로 반환하여 libc가 namespace 플래그를 검사하는 clone 경로로 전환하도록 한다. 일반 스레드와 자식 프로세스는 같은 경계를 상속한다.\n"
+    },
+    {
+      "id": "b000014",
+      "kind": "blank",
+      "start_line": 14,
+      "end_line": 14,
+      "raw": "\n"
+    },
+    {
+      "id": "b000015",
+      "kind": "paragraph",
+      "start_line": 15,
+      "end_line": 15,
+      "raw": "이는 `chdir` 또는 문자열 prefix 비교만으로 구현한 제한이 아니다. [chroot의 작업 디렉터리·열린 descriptor 한계](https://man7.org/linux/man-pages/man2/chroot.2.html)를 함께 처리하고, [bind mount의 개별 읽기 전용 플래그](https://man7.org/linux/man-pages/man2/mount.2.html), [no_new_privs의 exec 상속](https://docs.kernel.org/userspace-api/no_new_privs.html), [seccomp의 아키텍처·자식 상속 계약](https://docs.kernel.org/userspace-api/seccomp_filter.html)을 조합한다.\n"
+    },
+    {
+      "id": "b000016",
+      "kind": "blank",
+      "start_line": 16,
+      "end_line": 16,
+      "raw": "\n"
+    },
+    {
+      "id": "b000017",
+      "kind": "paragraph",
+      "start_line": 17,
+      "end_line": 17,
+      "raw": "볼륨·컨테이너·필수 디렉터리·보조 프로그램·namespace·권한 제거·seccomp 중 어느 하나라도 준비하지 못하면 애플리케이션 코드를 실행하지 않는다. 제한을 끄고 root 워크로드로 전환하는 옵션은 제공하지 않는다. 게스트 제어 채널은 PID 1에 남아 실패한 워크로드의 상태 조회와 VM 종료를 수행한다.\n"
+    },
+    {
+      "id": "b000018",
+      "kind": "blank",
+      "start_line": 18,
+      "end_line": 18,
+      "raw": "\n"
+    },
+    {
+      "id": "b000019",
+      "kind": "heading",
+      "start_line": 19,
+      "end_line": 19,
+      "raw": "## 영속 데이터와 기존 VM\n",
+      "level": 2,
+      "title": "영속 데이터와 기존 VM"
+    },
+    {
+      "id": "b000020",
+      "kind": "blank",
+      "start_line": 20,
+      "end_line": 20,
+      "raw": "\n"
+    },
+    {
+      "id": "b000021",
+      "kind": "paragraph",
+      "start_line": 21,
+      "end_line": 21,
+      "raw": "부팅 횟수는 패키지의 `.ii-runtime/boot-count`에 보존한다. 기존 `/data/boot-count`가 있으면 최초 한 번 읽어 횟수를 이어받고 기존 파일은 바꾸지 않는다. 다른 `/data` 파일을 자동으로 이동·삭제하지 않는다. OS 초기화와 볼륨 포맷·마운트·동기화는 신뢰하는 PID 1의 책임이며 애플리케이션의 파일 작업 권한과 분리한다.\n"
+    },
+    {
+      "id": "b000022",
+      "kind": "blank",
+      "start_line": 22,
+      "end_line": 22,
+      "raw": "\n"
+    },
+    {
+      "id": "b000023",
+      "kind": "paragraph",
+      "start_line": 23,
+      "end_line": 23,
+      "raw": "인스턴스 생성 시 부팅 이미지를 VM 디렉터리에 복사하므로 소스 이미지 재생성만으로 기존 VM이 바뀌지는 않는다. 같은 커널을 사용하는 정지 VM은 다음 도구로 initramfs를 갱신한다.\n"
+    },
+    {
+      "id": "b000024",
+      "kind": "blank",
+      "start_line": 24,
+      "end_line": 24,
+      "raw": "\n"
+    },
+    {
+      "id": "b000025",
+      "kind": "fenced_code",
+      "start_line": 25,
+      "end_line": 27,
+      "raw": "```sh\npython3 -B tools/upgrade_guest.py VM_ID --image build/images/aarch64\n```\n",
+      "language": "sh",
+      "code": "python3 -B tools/upgrade_guest.py VM_ID --image build/images/aarch64\n",
+      "closed": true
+    },
+    {
+      "id": "b000026",
+      "kind": "blank",
+      "start_line": 28,
+      "end_line": 28,
+      "raw": "\n"
+    },
+    {
+      "id": "b000027",
+      "kind": "paragraph",
+      "start_line": 29,
+      "end_line": 29,
+      "raw": "이 도구는 VM 정지·UUID·동일 커널·이미지 해시·프로파일을 확인하고 런타임과 동일한 인스턴스 잠금을 잡는다. 잠금 획득 후 QEMU 프로세스·제어 소켓 흔적이 없음을 다시 확인한 뒤 이전 initramfs와 메타데이터를 `build/guest-upgrades/`에 백업하고 새 initramfs만 원자적으로 교체한다. 디스크 해시와 인스턴스 메타데이터의 불변성을 확인하고 동일 이미지 적용은 변경 없이 끝낸다. 실행 중 VM·다른 커널·링크 경로·불일치 이미지는 거부한다. 커널 교체를 이 도구에서 숨겨 수행하지 않는다.\n"
+    },
+    {
+      "id": "b000028",
+      "kind": "blank",
+      "start_line": 30,
+      "end_line": 30,
+      "raw": "\n"
+    },
+    {
+      "id": "b000029",
+      "kind": "paragraph",
+      "start_line": 31,
+      "end_line": 31,
+      "raw": "서버의 SSH 게이트웨이 이미지 카탈로그도 새 부팅 이미지를 가리키도록 관리한다. 이 정책의 실행 근거는 제공하는 iiOS의 PID 1과 launcher이다. 별도로 제작한 커널·PID 1은 해당 이미지 제작자가 같은 실행 계약을 구현·검증해야 한다. 호스트 운영자는 이미지와 게이트웨이 카탈로그의 신뢰 경계를 소유한다.\n"
+    },
+    {
+      "id": "b000030",
+      "kind": "blank",
+      "start_line": 32,
+      "end_line": 32,
+      "raw": "\n"
+    },
+    {
+      "id": "b000031",
+      "kind": "heading",
+      "start_line": 33,
+      "end_line": 33,
+      "raw": "## 빌드와 검증\n",
+      "level": 2,
+      "title": "빌드와 검증"
+    },
+    {
+      "id": "b000032",
+      "kind": "blank",
+      "start_line": 34,
+      "end_line": 34,
+      "raw": "\n"
+    },
+    {
+      "id": "b000033",
+      "kind": "paragraph",
+      "start_line": 35,
+      "end_line": 35,
+      "raw": "게스트는 C와 C++를 모두 Linux 대상으로 지정한 도구 체인이 필요하다. `ii-init`, `ii-workload`, `ii-files`, `ii-guest-service`를 정적 링크한다. 게스트의 패키지 검사는 같은 iiSocietyContainer 소스의 `DirectoryStorage.cpp`를 수정 없이 교차 컴파일하고 iiFileProvider Native를 사용한다. 호스트 설치본을 Linux 게스트에 링크하지 않는다.\n"
+    },
+    {
+      "id": "b000034",
+      "kind": "blank",
+      "start_line": 36,
+      "end_line": 36,
+      "raw": "\n"
+    },
+    {
+      "id": "b000035",
+      "kind": "paragraph",
+      "start_line": 37,
+      "end_line": 37,
+      "raw": "이전 이미지 작성기와 `tests/sandbox_boot.py`는 실행 이미지 또는 VM 상태를 `build/`에 두는 경로를 포함한다. 현재 시험 정책에 맞게 이 경로를 `resources/`로 옮기기 전에는 해당 VM 시험을 실행하지 않는다. VM 시험 자체도 전용 Linux 컨테이너의 TCG에서만 실행해야 한다.\n"
+    },
+    {
+      "id": "b000036",
+      "kind": "blank",
+      "start_line": 38,
+      "end_line": 38,
+      "raw": "\n"
+    },
+    {
+      "id": "b000037",
+      "kind": "paragraph",
+      "start_line": 39,
+      "end_line": 39,
+      "raw": "이미지 작성기는 정적 aarch64 ELF만 받으며 동적 인터프리터·다른 아키텍처·잘린 ELF를 거부한다. 워크로드가 있으면 launcher가 필수이다. 기본 예제는 네트워크 서비스를 제공하는 정적 iiSDK 프로그램이며 동적 Linux 배포판 전체를 실행 루트에 제공하지 않는다.\n"
+    },
+    {
+      "id": "b000038",
+      "kind": "blank",
+      "start_line": 40,
+      "end_line": 40,
+      "raw": "\n"
+    },
+    {
+      "id": "b000039",
+      "kind": "paragraph",
+      "start_line": 41,
+      "end_line": 41,
+      "raw": "호스트 `iiVirtualizer.Workspace`는 패키지·링크·메타데이터·기존 파일 보존을 검사하고 `iiVirtualizer.GuestUpgrade`는 정지 이미지 갱신·백업·잠금·UUID/디스크 보존을 검사한다. 실제 Linux의 거부 여부는 별도 opt-in `sandbox_boot.py`로 검사한다. 이 시험은 Files 내부 읽기·쓰기·이동·삭제, 외부 경로·심볼릭 링크·원시 장치·마운트·권한 복구 거부, iiSDK worker·자식 프로세스의 경계 상속, 재부팅 영속성, 잘못된 작업 디렉터리·launcher 부재·볼륨 부재의 실행 거부를 확인한다. 이 시험용 프로그램은 두 번째 부팅 후 HOME을 일부러 우회 링크로 바꾸므로 운영 이미지에 넣지 않는다. 하드웨어 가상화와 TCG 결과는 각각 기록한다.\n"
+    }
+  ],
+  "outline": [
+    {
+      "block_id": "b000001",
+      "parent_id": null,
+      "level": 1,
+      "title": "게스트 작업 파일시스템 경계",
+      "anchor": "게스트-작업-파일시스템-경계",
+      "start_line": 1
+    },
+    {
+      "block_id": "b000007",
+      "parent_id": "b000001",
+      "level": 2,
+      "title": "강제 방법",
+      "anchor": "강제-방법",
+      "start_line": 7
+    },
+    {
+      "block_id": "b000019",
+      "parent_id": "b000001",
+      "level": 2,
+      "title": "영속 데이터와 기존 VM",
+      "anchor": "영속-데이터와-기존-vm",
+      "start_line": 19
+    },
+    {
+      "block_id": "b000031",
+      "parent_id": "b000001",
+      "level": 2,
+      "title": "빌드와 검증",
+      "anchor": "빌드와-검증",
+      "start_line": 33
+    }
+  ],
+  "indexes": {
+    "directive_candidates": [
+      {
+        "block_id": "b000009",
+        "line": 9,
+        "text": "신뢰하는 PID 1이 장치·네트워크·데이터 볼륨을 준비하고 iiSocietyContainer의 Qt 독립 `DirectoryStorage`로 실제 디렉터리 패키지를 생성·검사한다. 단순히 확장자가 일치하는 경로를 허용하지 않는다. 컨테이너·Files·HOME·TMPDIR·상태 디렉터리가 심볼릭 링크나 경로 우회이면 실행하지 않는다. 기존 패키지의 일반 파일 하드링크는 모든 이름이 패키지 안에 있는지 검사하며, 0.5.0부터 Files 경계도 별도로 검사한다. 외부 이름과 inode를 공유하거나 검사 항목이 100만 개를 넘으면 거부한다. Files 내부 하드링크는 유지하고 Files와 관리 메타데이터를 연결하는 하드링크는 거부한다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000011",
+        "line": 11,
+        "text": "PID 1은 `/app/service`를 직접 실행하지 않고 정적 Linux 부팅 보조 프로그램 `ii-workload`를 iiSDKCore Process로 실행한다. 보조 프로그램은 별도 마운트 namespace를 만들고 전파를 private으로 바꾼다. 읽기 전용 tmpfs 실행 루트에 실행 파일·OS 식별·DNS 설정만 읽기 전용으로 연결하고, 준비한 `.societycontainer/Files`만 `nosuid,nodev` 데이터 마운트로 연결한다. `/dev/null`은 표준 입출력 API를 위한 고정된 폐기 장치이다. 원시 디스크·호스트 공유 디렉터리·`/proc`·`/sys`는 이 실행 루트에 노출하지 않는다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000013",
+        "line": 13,
+        "text": "`chroot` 뒤 현재 디렉터리도 Files로 옮긴다. UID/GID는 1000으로 고정하고 보조 그룹, effective/permitted/inheritable·ambient·bounding capabilities를 제거한다. `no_new_privs`와 securebits를 잠그고 core dump를 금지하며 0·1·2를 제외한 상속 descriptor를 닫는다. 이후 아키텍처를 확인하는 seccomp 필터로 마운트·chroot·namespace 재구성·장치 생성·파일 핸들 우회·외부 descriptor 가져오기·ptrace·커널 모듈·콘솔 ioctl 등을 차단한다. clone3는 ENOSYS로 반환하여 libc가 namespace 플래그를 검사하는 clone 경로로 전환하도록 한다. 일반 스레드와 자식 프로세스는 같은 경계를 상속한다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000017",
+        "line": 17,
+        "text": "볼륨·컨테이너·필수 디렉터리·보조 프로그램·namespace·권한 제거·seccomp 중 어느 하나라도 준비하지 못하면 애플리케이션 코드를 실행하지 않는다. 제한을 끄고 root 워크로드로 전환하는 옵션은 제공하지 않는다. 게스트 제어 채널은 PID 1에 남아 실패한 워크로드의 상태 조회와 VM 종료를 수행한다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000021",
+        "line": 21,
+        "text": "부팅 횟수는 패키지의 `.ii-runtime/boot-count`에 보존한다. 기존 `/data/boot-count`가 있으면 최초 한 번 읽어 횟수를 이어받고 기존 파일은 바꾸지 않는다. 다른 `/data` 파일을 자동으로 이동·삭제하지 않는다. OS 초기화와 볼륨 포맷·마운트·동기화는 신뢰하는 PID 1의 책임이며 애플리케이션의 파일 작업 권한과 분리한다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000027",
+        "line": 29,
+        "text": "이 도구는 VM 정지·UUID·동일 커널·이미지 해시·프로파일을 확인하고 런타임과 동일한 인스턴스 잠금을 잡는다. 잠금 획득 후 QEMU 프로세스·제어 소켓 흔적이 없음을 다시 확인한 뒤 이전 initramfs와 메타데이터를 `build/guest-upgrades/`에 백업하고 새 initramfs만 원자적으로 교체한다. 디스크 해시와 인스턴스 메타데이터의 불변성을 확인하고 동일 이미지 적용은 변경 없이 끝낸다. 실행 중 VM·다른 커널·링크 경로·불일치 이미지는 거부한다. 커널 교체를 이 도구에서 숨겨 수행하지 않는다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000029",
+        "line": 31,
+        "text": "서버의 SSH 게이트웨이 이미지 카탈로그도 새 부팅 이미지를 가리키도록 관리한다. 이 정책의 실행 근거는 제공하는 iiOS의 PID 1과 launcher이다. 별도로 제작한 커널·PID 1은 해당 이미지 제작자가 같은 실행 계약을 구현·검증해야 한다. 호스트 운영자는 이미지와 게이트웨이 카탈로그의 신뢰 경계를 소유한다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000033",
+        "line": 35,
+        "text": "게스트는 C와 C++를 모두 Linux 대상으로 지정한 도구 체인이 필요하다. `ii-init`, `ii-workload`, `ii-files`, `ii-guest-service`를 정적 링크한다. 게스트의 패키지 검사는 같은 iiSocietyContainer 소스의 `DirectoryStorage.cpp`를 수정 없이 교차 컴파일하고 iiFileProvider Native를 사용한다. 호스트 설치본을 Linux 게스트에 링크하지 않는다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000035",
+        "line": 37,
+        "text": "이전 이미지 작성기와 `tests/sandbox_boot.py`는 실행 이미지 또는 VM 상태를 `build/`에 두는 경로를 포함한다. 현재 시험 정책에 맞게 이 경로를 `resources/`로 옮기기 전에는 해당 VM 시험을 실행하지 않는다. VM 시험 자체도 전용 Linux 컨테이너의 TCG에서만 실행해야 한다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      },
+      {
+        "block_id": "b000037",
+        "line": 39,
+        "text": "이미지 작성기는 정적 aarch64 ELF만 받으며 동적 인터프리터·다른 아키텍처·잘린 ELF를 거부한다. 워크로드가 있으면 launcher가 필수이다. 기본 예제는 네트워크 서비스를 제공하는 정적 iiSDK 프로그램이며 동적 Linux 배포판 전체를 실행 루트에 제공하지 않는다.",
+        "basis": "lexical_match",
+        "context": "paragraph"
+      }
+    ],
+    "commands": [
+      {
+        "block_id": "b000025",
+        "language": "sh",
+        "code": "python3 -B tools/upgrade_guest.py VM_ID --image build/images/aarch64\n"
+      }
+    ],
+    "links": [
+      {
+        "block_id": "b000005",
+        "label": "Files API",
+        "target": "files-api.md",
+        "kind": "relative",
+        "line": 5
+      },
+      {
+        "block_id": "b000015",
+        "label": "chroot의 작업 디렉터리·열린 descriptor 한계",
+        "target": "https://man7.org/linux/man-pages/man2/chroot.2.html",
+        "kind": "external",
+        "line": 15
+      },
+      {
+        "block_id": "b000015",
+        "label": "bind mount의 개별 읽기 전용 플래그",
+        "target": "https://man7.org/linux/man-pages/man2/mount.2.html",
+        "kind": "external",
+        "line": 15
+      },
+      {
+        "block_id": "b000015",
+        "label": "no_new_privs의 exec 상속",
+        "target": "https://docs.kernel.org/userspace-api/no_new_privs.html",
+        "kind": "external",
+        "line": 15
+      },
+      {
+        "block_id": "b000015",
+        "label": "seccomp의 아키텍처·자식 상속 계약",
+        "target": "https://docs.kernel.org/userspace-api/seccomp_filter.html",
+        "kind": "external",
+        "line": 15
+      }
+    ],
+    "tables": []
+  },
+  "provenance": {
+    "generator": "workspace-docs",
+    "version": "1.0.0",
+    "profile": "lossless-blocks-v1",
+    "derived": true
+  }
+}

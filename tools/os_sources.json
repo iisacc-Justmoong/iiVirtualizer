@@ -1,0 +1,31 @@
+{
+  "android_x86_64_9_0_r2": {
+    "filename": "android-x86_64-9.0-r2.iso",
+    "url": "https://downloads.sourceforge.net/project/android-x86/Release%209.0/android-x86_64-9.0-r2.iso",
+    "checksum_algorithm": "sha1",
+    "checksum": "1cc85b5ed7c830ff71aecf8405c7281a9c995aa0",
+    "checksum_source": "https://www.android-x86.org/releases/releasenote-9-0-r2.html",
+    "sha256": "f7eb8fc56f29ad5432335dc054183acf086c539f3990f0b6e9ff58bd6df4604e"
+  },
+  "debian_13_arm64": {
+    "filename": "debian-13-genericcloud-arm64.tar.xz",
+    "url": "https://cloud.debian.org/images/cloud/trixie/20261021-2638/debian-13-genericcloud-arm64-20261021-2638.tar.xz",
+    "checksum_algorithm": "sha512",
+    "checksum": "33ffc4f1d6b685b33344043356fcc6b796c49162605ad9b00ef3881c6b92c572b1c066dec9c300457d463f4e92764aa81ab1fcaa22194f8aa3c8fa17323049dc",
+    "checksum_source": "https://cloud.debian.org/images/cloud/trixie/20261021-2638/SHA512SUMS",
+    "sha256": "e748dc9ef85b177dba0e5a4f80144bc95b5735b632ca5003946c8fc1f7306cd9"
+  },
+  "debian_13_amd64": {
+    "filename": "debian-13-genericcloud-amd64-20261021-2638.tar.xz",
+    "url": "https://cloud.debian.org/images/cloud/trixie/20261021-2638/debian-13-genericcloud-amd64-20261021-2638.tar.xz",
+    "checksum_algorithm": "sha512",
+    "checksum": "2a8130402f3cd77b715e4c0ebe1f99ad7618b86ba3b802943c5e101dd693791d506e951d89ea656cd1aa839dee54536d256086ac90d127439620d197e50e9010",
+    "checksum_source": "https://cloud.debian.org/images/cloud/trixie/20261021-2638/SHA512SUMS",
+    "sha256": "a9b7b33198fe71aedd258a70cdced61dd234c00320d664c99aa3e071d88f873c"
+  },
+  "e2fsprogs": {
+    "url": "https://www.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v1.47.2/e2fsprogs-1.47.2.tar.xz",
+    "sha256": "08242e64ca0e8194d9c1caad49762b19209a06318199b63ce74ae4ef2d74e63c",
+    "checksum_source": "https://www.kernel.org/pub/linux/kernel/people/tytso/e2fsprogs/v1.47.2/sha256sums.asc"
+  }
+}

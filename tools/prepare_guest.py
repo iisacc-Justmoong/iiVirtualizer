@@ -5,6 +5,7 @@ import gzip
 import hashlib
 import json
 import os
+import re
 from pathlib import Path, PurePosixPath
 import shutil
 import stat
@@ -14,6 +15,19 @@ import tarfile
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
+
+def static_aarch64_elf(binary):
+    """Accept only bounded ELF64 little-endian aarch64 static executables."""
+    if len(binary) < 64 or binary[:6] != b'\x7fELF\x02\x01' or struct.unpack_from('<H', binary, 16)[0] not in (2, 3) or struct.unpack_from('<H', binary, 18)[0] != 183:
+        raise ValueError('Guest programs must be static aarch64 ELF64 executables')
+    offset = struct.unpack_from('<Q', binary, 32)[0]
+    size, count = struct.unpack_from('<HH', binary, 54)
+    if size < 56 or not count or count > 1024 or offset < 64 or offset + size * count > len(binary):
+        raise ValueError('Invalid guest ELF program headers')
+    for index in range(count):
+        if struct.unpack_from('<I', binary, offset + index * size)[0] == 3:
+            raise ValueError('Dynamically linked workloads are unavailable in the sealed runtime root')
+    return binary
 
 def download(spec, directory):
     directory.mkdir(parents=True, exist_ok=True)
@@ -76,6 +90,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--init', type=Path, help='Static Linux ii-init executable')
     parser.add_argument('--workload', type=Path, help='Optional static Linux executable installed as /app/service')
+    parser.add_argument('--sandbox', type=Path, help='Static ii-workload launcher (default: sibling of --init)')
+    parser.add_argument('--files-agent', type=Path, help='Static ii-files worker (default: sibling of --init)')
+    parser.add_argument('--process-launcher', type=Path, help='Static ii-process launcher (default: sibling of --init)')
+    parser.add_argument('--program', action='append', default=[], metavar='NAME=ELF', help='Trusted static guest program catalog entry')
     parser.add_argument('--download-only', action='store_true')
     parser.add_argument('--output', type=Path, default=ROOT / 'build' / 'images' / 'aarch64')
     args = parser.parse_args()
@@ -126,9 +144,19 @@ def main():
         return
     if not args.init:
         parser.error('--init is required unless --download-only is used')
-    binary = args.init.read_bytes()
-    if binary[:4] != b'\x7fELF' or struct.unpack_from('<H', binary, 18)[0] != 183:
-        raise ValueError('ii-init must be an aarch64 Linux ELF executable')
+    binary = static_aarch64_elf(args.init.read_bytes())
+    launcher = args.sandbox or args.init.with_name('ii-workload')
+    sandbox = static_aarch64_elf(launcher.read_bytes()) if launcher.is_file() else None
+    files_path = args.files_agent or args.init.with_name('ii-files')
+    files_agent = static_aarch64_elf(files_path.read_bytes()) if files_path.is_file() else None
+    if files_agent is None:
+        raise ValueError('The confined ii-files worker is required for the iiOS Files API')
+    process_path = args.process_launcher or args.init.with_name('ii-process')
+    process_launcher = static_aarch64_elf(process_path.read_bytes()) if process_path.is_file() else None
+    if process_launcher is None:
+        raise ValueError('The confined ii-process launcher is required for the process API')
+    if args.workload and sandbox is None:
+        raise ValueError('A sandbox launcher is required whenever a workload is supplied')
     upstream = unpack_cpio(gzip.decompress(original_initrd))
     entries = {}
     # Include the upstream early-boot drivers and dependency metadata, but own
@@ -167,7 +195,7 @@ def main():
             content = tar.extractfile(member).read()
             entries[name] = (stat.S_IFREG | (member.mode & 0o777), content)
     entries['init'] = (stat.S_IFREG | 0o755, binary)
-    entries['etc/os-release'] = (stat.S_IFREG | 0o644, b'NAME="iiOS"\nID=iios\nPRETTY_NAME="iiOS (Linux + iiSDK)"\nVERSION_ID=0.1.0\n')
+    entries['etc/os-release'] = (stat.S_IFREG | 0o644, b'NAME="iiOS"\nID=iios\nPRETTY_NAME="iiOS (Linux + iiSDK)"\nVERSION_ID=0.6.0\n')
     entries['etc/resolv.conf'] = (stat.S_IFREG | 0o644, b'nameserver 10.0.2.3\n')
     # A small deterministic DHCP hook; BusyBox supplies the interpreter.
     hook = b'#!/bin/sh\ncase "$1" in\n bound|renew)\n /bin/busybox ifconfig "$interface" "$ip" netmask "${subnet:-255.255.255.0}" up\n /bin/busybox ip route replace default via "${router%% *}" dev "$interface"\n ;;\nesac\n'
@@ -176,8 +204,23 @@ def main():
     entries['sbin/modprobe'] = (stat.S_IFLNK | 0o777, b'/bin/busybox')
     entries['dev/console'] = (stat.S_IFCHR | 0o600, b'')
     entries['dev/null'] = (stat.S_IFCHR | 0o666, b'')
-    if args.workload:
-        entries['app/service'] = (stat.S_IFREG | 0o755, args.workload.read_bytes())
+    if sandbox:
+        entries['sbin/ii-workload'] = (stat.S_IFREG | 0o755, sandbox)
+    entries['sbin/ii-files'] = (stat.S_IFREG | 0o755, files_agent)
+    entries['sbin/ii-process'] = (stat.S_IFREG | 0o755, process_launcher)
+    programs = {}
+    for value in args.program:
+        name, separator, path = value.partition('=')
+        if not separator or not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', name) or name == 'service' or name in programs:
+            raise ValueError('Invalid or duplicate guest program catalog entry')
+        if len(programs) >= 16:
+            raise ValueError('Guest program catalog exceeds its limit')
+        program = static_aarch64_elf(Path(path).read_bytes())
+        entries['app/programs/' + name] = (stat.S_IFREG | 0o755, program)
+        programs[name] = hashlib.sha256(program).hexdigest()
+    workload = static_aarch64_elf(args.workload.read_bytes()) if args.workload else None
+    if workload:
+        entries['app/service'] = (stat.S_IFREG | 0o755, workload)
     directories = {'proc', 'sys', 'dev', 'run', 'tmp', 'data', 'etc', 'app', 'bin', 'lib'}
     for name in list(entries):
         for parent in PurePosixPath(name).parents:
@@ -187,7 +230,12 @@ def main():
     ordered += [(name, *entries[name]) for name in sorted(entries)]
     image = gzip.compress(cpio_bytes(ordered), mtime=0)
     (output / 'initramfs.cpio.gz').write_bytes(image)
-    manifest = {'schema': 1, 'architecture': 'aarch64', 'os': 'iiOS', 'init': 'iiSDKCore PID 1',
+    manifest = {'schema': 1, 'version': '0.6.0', 'architecture': 'aarch64', 'os': 'iiOS', 'init': 'iiSDKCore PID 1',
+                'filesystem_profile': 'society-v1', 'container_root': '/data/Society.societycontainer',
+                'processes_api': 1, 'process_launcher_sha256': hashlib.sha256(process_launcher).hexdigest(), 'programs': programs,
+                'files_api': 1, 'files_agent_sha256': hashlib.sha256(files_agent).hexdigest(),
+                'sandbox_sha256': hashlib.sha256(sandbox).hexdigest() if sandbox else None,
+                'workload_sha256': hashlib.sha256(workload).hexdigest() if workload else None,
                 'kernel_sha256': hashlib.sha256(kernel).hexdigest(), 'init_sha256': hashlib.sha256(binary).hexdigest(),
                 'initramfs_sha256': hashlib.sha256(image).hexdigest(), 'entries': len(ordered),
                 'sources': {k:v for k,v in sources.items() if k.startswith('alpine_') or k == 'guest_packages'}}

@@ -45,6 +45,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--jobs', type=int, default=4)
     parser.add_argument('--without-network', action='store_true')
+    parser.add_argument('--with-display', action='store_true', help='Enable pixman/VNC diagnostics in a separate engine build')
+    parser.add_argument('--with-tpm', action='store_true', help='Enable QEMU TPM device and emulator support')
+    parser.add_argument('--output', type=Path, help='Optional build directory beneath this project build/')
+    parser.add_argument('--targets', nargs='+', choices=['aarch64','x86_64'], default=['aarch64','x86_64'])
     args = parser.parse_args()
     base = ROOT / 'build' / 'dependencies'
     base.mkdir(parents=True, exist_ok=True)
@@ -71,21 +75,32 @@ def main():
                  '-Ddefault_library=static'], env=env)
         run(['ninja', '-C', slirp_build, '-j', args.jobs, 'install'], env=env)
     env['PKG_CONFIG_PATH'] = str(prefix / 'lib' / 'pkgconfig') + os.pathsep + env.get('PKG_CONFIG_PATH', '')
-    qemu_build = qemu / 'build'
-    qemu_build.mkdir(exist_ok=True)
+    qemu_build = args.output.resolve() if args.output else qemu / 'build'
+    if ROOT / 'build' not in qemu_build.parents:
+        raise ValueError('QEMU build output must stay beneath this project build/')
+    qemu_build.mkdir(parents=True, exist_ok=True)
+    if (args.with_display or args.with_tpm) and (qemu_build / 'build.ninja').exists():
+        config=(qemu_build/'config-host.h').read_text()
+        definitions={line.split()[1] for line in config.splitlines() if line.startswith('#define ')}
+        required=({'CONFIG_PIXMAN','CONFIG_VNC'} if args.with_display else set()) | ({'CONFIG_TPM'} if args.with_tpm else set())
+        if not required <= definitions:
+            raise ValueError('Requested QEMU features require a fresh --output directory')
     if not (qemu_build / 'build.ninja').exists():
-        flags = ['--without-default-features', '--target-list=aarch64-softmmu,x86_64-softmmu',
+        flags = ['--without-default-features', '--target-list='+','.join(target+'-softmmu' for target in args.targets),
                  '--enable-tcg', '--enable-fdt=internal', '--disable-docs', '--disable-werror',
                  '--prefix=' + str(prefix), '--python=' + str(python),
                  '--enable-slirp' if not args.without_network else '--disable-slirp']
+        if args.with_display:
+            flags.extend(['--enable-pixman','--enable-vnc'])
+        if args.with_tpm:
+            flags.append('--enable-tpm')
         if platform.system() == 'Darwin':
             flags.append('--enable-hvf')
         if platform.system() == 'Linux':
             flags.append('--enable-kvm')
         run([qemu / 'configure', *flags], cwd=qemu_build, env=env)
-    run(['ninja', '-C', qemu_build, '-j', args.jobs, 'qemu-system-aarch64', 'qemu-system-x86_64'], env=env)
-    print(json.dumps({'qemu_aarch64': str(qemu_build / 'qemu-system-aarch64'),
-                      'qemu_x86_64': str(qemu_build / 'qemu-system-x86_64')}, indent=2))
+    run(['ninja', '-C', qemu_build, '-j', args.jobs, *['qemu-system-'+target for target in args.targets]], env=env)
+    print(json.dumps({'qemu_'+target: str(qemu_build / ('qemu-system-'+target)) for target in args.targets}, indent=2))
 
 if __name__ == '__main__':
     main()

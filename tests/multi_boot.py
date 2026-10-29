@@ -8,11 +8,14 @@ from pathlib import Path
 import selectors
 import socket
 import subprocess
+import sys
 import time
 import urllib.request
 import uuid
 
 ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT/'tools'))
+from test_isolation import require_test_container
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
@@ -21,6 +24,7 @@ def main():
     parser.add_argument('--image',type=Path,default=ROOT/'build/images/aarch64')
     parser.add_argument('--controller',type=Path,default=ROOT/'build/iiVirtualizer_multi_boot')
     args=parser.parse_args()
+    require_test_container(args.accel)
     prefix=args.accel+'-'+uuid.uuid4().hex[:6]
     state=ROOT/'build/mv'/prefix
     evidence=ROOT/'build/multi-verification'/prefix

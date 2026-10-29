@@ -120,6 +120,27 @@ Result<std::string> Runtime::guest_info(std::string_view id) {
         return impl_->backend.guest(*vm,"info");
     });
 }
+Result<FileReply> Runtime::files(std::string_view id,const FileRequest& request,std::chrono::milliseconds timeout) {
+    return guarded([&]() -> Result<FileReply> {
+        if(auto valid=validate(request);!valid)return std::unexpected(valid.error());
+        if(timeout.count()<1||timeout>std::chrono::seconds(60))return core::fail(core::ErrorCode::invalid_argument,"Files deadline must be 1..60000 milliseconds");
+        detail::Store::Lock lock(impl_->store,id);auto vm=impl_->inspect(id);if(!vm)return std::unexpected(vm.error());
+        if(vm->state!=State::running)return core::fail(core::ErrorCode::busy,"Files operations require a running VM");
+        if(!impl_->backend.files)return core::fail(core::ErrorCode::unsupported,"The selected backend does not support guest Files operations");
+        return impl_->backend.files(*vm,request,timeout);
+    });
+}
+Result<ProcessReply> Runtime::processes(std::string_view id,const ProcessRequest& request,std::chrono::milliseconds timeout) {
+    return guarded([&]() -> Result<ProcessReply> {
+        if(auto valid=validate(request);!valid)return std::unexpected(valid.error());
+        if(timeout.count()<1||timeout>std::chrono::seconds(60))return core::fail(core::ErrorCode::invalid_argument,"Process deadline must be 1..60000 milliseconds");
+        detail::Store::Lock lock(impl_->store,id);auto vm=impl_->inspect(id);if(!vm)return std::unexpected(vm.error());
+        if(vm->state!=State::running)return core::fail(core::ErrorCode::busy,"Guest process operations require a running VM");
+        if(request.launch&&request.launch->memory_mib>vm->spec.memory_mib)return core::fail(core::ErrorCode::out_of_range,"Process memory limit exceeds VM memory");
+        if(!impl_->backend.processes)return core::fail(core::ErrorCode::unsupported,"The selected backend does not support guest process operations");
+        return impl_->backend.processes(*vm,request,timeout);
+    });
+}
 ii::runtime::Future<Instance> Runtime::submit(Operation operation,std::string id,std::chrono::milliseconds timeout) {
     return impl_->operations.run_with_promise<Instance>(
         [owner=impl_.get(),operation,id=std::move(id),timeout](ii::runtime::Promise<Instance>& promise) {

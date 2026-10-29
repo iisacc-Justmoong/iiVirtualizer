@@ -1,4 +1,9 @@
 #include "../iiVirtualizer/GuestProtocol.h"
+#include "Workspace.h"
+#include "ProcessPlatform.h"
+#include "../iiVirtualizer/ProcessWire.h"
+#include "../iiVirtualizer/FilesWire.h"
+#include <iiFileProviderStorage.h>
 #include <iiSDKCore/Runtime/EventLoop.h>
 #include <iiSDKCore/Runtime/Runtime.h>
 #include <iiSDKCore/Runtime/Query.h>
@@ -12,6 +17,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stop_token>
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/sysinfo.h>
@@ -36,7 +42,7 @@ static bool busybox(std::initializer_list<std::string> arguments,bool quiet=fals
     std::vector<std::string> command{"/bin/busybox"};command.insert(command.end(),arguments.begin(),arguments.end());return run(std::move(command),quiet);
 }
 static void mount_fs(const char* source,const char* target,const char* type,unsigned long flags=0,const char* options=nullptr) {
-    fs::create_directories(target);
+    iiFileProvider::native::createDirectories(target);
     if(::mount(source,target,type,flags,options)!=0&&errno!=EBUSY)throw std::system_error(errno,std::generic_category(),std::string("mount ")+target);
 }
 static std::string parameter(const std::string& commandline,std::string_view key) {
@@ -52,7 +58,7 @@ static bool mount_data(bool initialize) {
     bool blank=disk.gcount()==static_cast<std::streamsize>(sector.size());
     for(char c:sector)blank=blank&&c==0;
     if(blank && (!initialize||!run({"/sbin/mke2fs","-q","-t","ext4","-F","/dev/vda"})))return false;
-    if(::mount("/dev/vda","/data","ext4",MS_NOATIME,nullptr)!=0) {
+    if(::mount("/dev/vda","/data","ext4",MS_NOATIME|MS_NOSUID|MS_NODEV,nullptr)!=0) {
         std::cerr<<"ii-init: data volume mount failed: "<<std::strerror(errno)<<'\n';return false;
     }
     return true;
@@ -85,9 +91,21 @@ int main() {
         }
         const bool volume=mount_data(parameter(commandline,"ii.format_data")=="1");
         std::uint64_t boots=0;
+        std::optional<v::guest::Workspace> workspace;
         if(volume) {
-            {std::ifstream previous("/data/boot-count");previous>>boots;}
-            ++boots;std::ofstream next("/data/boot-count");next<<boots<<'\n';next.flush();
+            auto prepared=v::guest::prepare_workspace("/data");
+            if(prepared) {
+                auto count=v::guest::advance_boot(*prepared);
+                if(count) {
+                    boots=*count;
+                    auto owner=[](const fs::path& path,unsigned uid,unsigned gid){
+                        if(::chown(path.c_str(),uid,gid)!=0)throw std::system_error(errno,std::generic_category(),"workspace owner");
+                    };
+                    owner(prepared->container,0,0);owner(prepared->state,0,0);
+                    for(const auto& path:{prepared->files,prepared->home,prepared->temporary})owner(path,v::guest::workload_uid,v::guest::workload_gid);
+                    workspace.emplace(std::move(*prepared));
+                }else std::cerr<<"ii-init: workspace blocked: "<<count.error()<<'\n';
+            }else std::cerr<<"ii-init: workspace blocked: "<<prepared.error()<<'\n';
         }
         ii::runtime::Runtime workers({.workers=2,.capacity=32});
         std::atomic<unsigned> tasks{0};
@@ -96,15 +114,26 @@ int main() {
         ii::runtime::EventLoop loop(32);
         const auto boot=std::chrono::steady_clock::now();std::uint64_t ticks=0;
         std::optional<ii::process::Process> workload;
+        struct FilePending final {std::atomic<bool> done=false;std::stop_source stop;std::string response;};
+        std::shared_ptr<FilePending> pending_file;
+        const bool files_ready=workspace&&fs::is_regular_file(fs::symlink_status("/sbin/ii-files"));
+        const bool process_ready=workspace&&fs::is_regular_file(fs::symlink_status("/sbin/ii-process"));
+        v::guest::ProcessPlatform process_platform;
+        v::guest::ProcessSupervisor processes(process_platform.launcher(),process_platform.hooks());
         if(fs::is_regular_file("/app/service")) {
-            ii::process::Launch launch;launch.arguments={"/app/service"};launch.working_directory=volume?"/data":"/app";
-            launch.input=ii::process::Input::closed;launch.output=ii::process::Output::inherit;launch.error=ii::process::ErrorOutput::inherit;
-            auto started=ii::process::Process::start(launch);
-            if(!started)std::cerr<<"ii-init: workload start failed: "<<started.error().message<<'\n';else workload.emplace(std::move(*started));
+            if(!workspace||!fs::is_regular_file(fs::symlink_status("/sbin/ii-workload")))
+                std::cerr<<"ii-init: workload blocked: Society workspace and sandbox launcher are required\n";
+            else {
+                ii::process::Launch launch;launch.arguments={"/sbin/ii-workload"};launch.working_directory="/";
+                launch.inherit_environment=false;launch.environment["IIV_BOOT_COUNT"]=std::to_string(boots);
+                launch.input=ii::process::Input::closed;launch.output=ii::process::Output::inherit;launch.error=ii::process::ErrorOutput::inherit;
+                auto started=ii::process::Process::start(launch);
+                if(!started)std::cerr<<"ii-init: workload start failed: "<<started.error().message<<'\n';else workload.emplace(std::move(*started));
+            }
         }
         ii::runtime::QueryPort<v::GuestCommand,std::string> query([&](const v::GuestCommand& request) {
             std::string reply="IIV1 "+uuid+" ";
-            if(request==v::GuestCommand::shutdown) {stopping=1;return reply+"STOPPING";}
+            if(request==v::GuestCommand::shutdown) {stopping=1;if(pending_file)pending_file->stop.request_stop();return reply+"STOPPING";}
             if(request==v::GuestCommand::ping)return reply+"PONG";
             struct sysinfo info{};(void)::sysinfo(&info);
             return reply+"INFO os=iiOS runtime=iiSDKCore pid=1 id="+id+" cpus="+std::to_string(::sysconf(_SC_NPROCESSORS_ONLN))+
@@ -112,11 +141,12 @@ int main() {
                 " uptime_ms="+std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-boot).count())+
                 " workers="+std::to_string(workers.stats().workers)+" tasks="+std::to_string(tasks.load())+
                 " ticks="+std::to_string(ticks)+" volume="+(volume?"mounted":"unavailable")+" boot="+std::to_string(boots)+
-                " workload="+(workload?"running":"none");
+                " workspace="+(workspace?workspace->container.string():"unavailable")+
+                " filesystem_profile="+v::guest::filesystem_profile+" files_api="+(files_ready?"1":"0")+" processes_api="+(process_ready?"1":"0")+" workload="+(workload?"running":"none");
         });
         int agent=-1;std::string incoming,outgoing;
         auto pump=loop.every(std::chrono::milliseconds(20),[&] {
-            ++ticks;
+            ++ticks;processes.tick();
             if(agent<0&&fs::exists("/sys/class/virtio-ports")) {
                 for(const auto& entry:fs::directory_iterator("/sys/class/virtio-ports")) {
                     std::ifstream name(entry.path()/"name");std::string value;std::getline(name,value);
@@ -124,32 +154,78 @@ int main() {
                 }
             }
             if(agent>=0) {
-                std::array<char,4096> bytes{};auto n=::read(agent,bytes.data(),bytes.size());
-                if(n>0)incoming.append(bytes.data(),static_cast<std::size_t>(n));
+                std::array<char,4096> bytes{};
+                for(unsigned count=0;count<16;++count){auto n=::read(agent,bytes.data(),bytes.size());if(n>0)incoming.append(bytes.data(),static_cast<std::size_t>(n));else break;if(incoming.size()>v::files_detail::frame_limit)break;}
                 for(unsigned count=0;count<8;++count) {
                     auto end=incoming.find('\n');if(end==std::string::npos)break;
                     auto line=incoming.substr(0,end);incoming.erase(0,end+1);
+                    if(line.starts_with("IIVP1 ")) {
+                        auto request=v::process_detail::decode_request(line,uuid);if(!request)continue;
+                        ii::core::Result<v::ProcessReply> result=ii::core::fail(ii::core::ErrorCode::unsupported,"Guest process workspace/launcher is unavailable");
+                        if(process_ready&&!stopping) {
+                            if(request->request.action==v::ProcessAction::monitor){v::ProcessReply reply;reply.monitor=process_platform.monitor(processes,ticks,workers.stats(),files_ready);result=std::move(reply);}
+                            else result=processes.execute(request->request);
+                        }
+                        outgoing+=v::process_detail::encode_reply(uuid,request->id,request->request.action,result);continue;
+                    }
+                    if(line.starts_with("IIVF1 ")) {
+                        auto envelope=v::files_detail::decode_request(line,uuid);if(!envelope)continue;
+                        auto failure=[&](ii::core::ErrorCode code,const char* message){return v::files_detail::encode_reply(uuid,envelope->id,envelope->request.action,ii::core::fail(code,message));};
+                        if(!files_ready||stopping){outgoing+=failure(ii::core::ErrorCode::unsupported,"Guest Files workspace/worker is unavailable");continue;}
+                        if(pending_file){outgoing+=failure(ii::core::ErrorCode::busy,"A guest Files operation is already pending");continue;}
+                        auto pending=std::make_shared<FilePending>();const auto request=*envelope;
+                        auto submitted=workers.post([pending,request,frame=std::move(line),uuid]() {
+                            auto fail=[&](const char* message){return v::files_detail::encode_reply(uuid,request.id,request.request.action,ii::core::fail(ii::core::ErrorCode::failed,message));};
+                            try {
+                                ii::process::Launch launch;launch.arguments={"/sbin/ii-files"};launch.working_directory="/";
+                                launch.inherit_environment=false;launch.environment["IIV_INSTANCE_UUID"]=uuid;
+                                auto process=ii::process::Process::start(launch);
+                                if(!process)pending->response=fail("Guest Files worker could not start");
+                                else {
+                                    const auto input=frame+"\n";ii::process::CommunicationOptions options;
+                                    options.deadline=ii::core::Deadline::after(request.timeout);options.stop=pending->stop.get_token();
+                                    options.output_limit=v::files_detail::frame_limit;options.error_limit=4096;
+                                    auto result=process->communicate(ii::core::byte_view(input),options);
+                                    if(!result||result->exit.reason!=ii::process::ExitReason::exited||result->exit.code||result->output_truncated||result->error_truncated)
+                                        pending->response=fail("Guest Files worker failed or timed out; inspect state before retrying");
+                                    else {
+                                        const std::string output(reinterpret_cast<const char*>(result->output.data()),result->output.size());
+                                        auto parsed=v::files_detail::decode_reply(output,uuid,request.id,request.request);
+                                        pending->response=v::files_detail::encode_reply(uuid,request.id,request.request.action,parsed);
+                                    }
+                                }
+                            }catch(...){pending->response=fail("Guest Files operation could not complete; inspect state before retrying");}
+                            pending->done.store(true,std::memory_order_release);
+                        });
+                        if(submitted)pending_file=std::move(pending);else outgoing+=failure(ii::core::ErrorCode::busy,"Guest executor has no Files capacity");
+                        continue;
+                    }
                     auto command=v::guest_request(line,uuid);
                     if(command) {auto response=query.send(*command);if(response)outgoing+=*response+"\n";}
                 }
-                if(incoming.size()>4096||outgoing.size()>16384) {incoming.clear();outgoing.clear();}
+                if(pending_file&&pending_file->done.load(std::memory_order_acquire)) {if(!stopping)outgoing+=pending_file->response;pending_file.reset();}
+                if(incoming.size()>v::files_detail::frame_limit||outgoing.size()>2*v::files_detail::frame_limit) {incoming.clear();outgoing.clear();}
                 if(!outgoing.empty()) {auto nwrite=::write(agent,outgoing.data(),outgoing.size());if(nwrite>0)outgoing.erase(0,static_cast<std::size_t>(nwrite));}
             }
             if(workload) {auto state=workload->poll();if(state&&*state) {std::cout<<"ii-init: workload exited code="<<(**state).code<<'\n';workload.reset();}}
             // Process owners reap their own children; PID 1 also collects orphans.
             for(;;) {
+                // A Files job owns a Process on an executor thread. Do not
+                // steal that child's exit while its communicate()/destructor
+                // is still responsible for reaping it, including spawn races.
+                if(pending_file)break;
                 siginfo_t orphan{};
                 if(::waitid(P_ALL,0,&orphan,WEXITED|WNOHANG|WNOWAIT)!=0||orphan.si_pid==0)break;
-                if(workload&&static_cast<std::uint64_t>(orphan.si_pid)==workload->id())break;
+                if((workload&&static_cast<std::uint64_t>(orphan.si_pid)==workload->id())||processes.owns(static_cast<std::uint64_t>(orphan.si_pid)))break;
                 int status=0;(void)::waitpid(orphan.si_pid,&status,WNOHANG);
             }
-            if(stopping&&outgoing.empty())loop.request_stop();
+            if(stopping&&outgoing.empty()&&!pending_file)loop.request_stop();
         });
         if(!pump)throw std::runtime_error("iiSDK EventLoop admission failed");
-        std::cout<<"IIVIRTUALIZER_READY os=iiOS runtime=iiSDKCore pid=1 id="<<id<<" uuid="<<uuid<<" workers="<<workers.stats().workers<<" tasks="<<tasks.load()<<" volume="<<(volume?"mounted":"unavailable")<<" boot="<<boots<<std::endl;
+        std::cout<<"IIVIRTUALIZER_READY os=iiOS runtime=iiSDKCore pid=1 id="<<id<<" uuid="<<uuid<<" workers="<<workers.stats().workers<<" tasks="<<tasks.load()<<" volume="<<(volume?"mounted":"unavailable")<<" boot="<<boots<<" workspace="<<(workspace?workspace->container.string():"unavailable")<<" filesystem_profile="<<v::guest::filesystem_profile<<std::endl;
         loop.run();
         if(agent>=0)::close(agent);
-        workload.reset();
+        processes.shutdown();workload.reset();
         (void)query.close();(void)workers.join();
         ::sync();if(volume)(void)::umount2("/data",0);
         std::cout<<"IIVIRTUALIZER_POWEROFF"<<std::endl;

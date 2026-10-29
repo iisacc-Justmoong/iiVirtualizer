@@ -1,0 +1,12 @@
+# The OCI index digest pins the official Debian base image across platforms.
+FROM docker.io/library/debian:13-slim@sha256:89c1ea91e897f0fe0a3731595330bc45b8bdef4047464a07116f891a94054b31
+
+RUN apt-get update && apt-get install --yes --no-install-recommends \
+    ca-certificates cmake g++ libboost-dev libsqlite3-dev libssl-dev ninja-build \
+    pkg-config python3 qemu-efi-aarch64 qemu-system-arm qemu-system-x86 \
+    qemu-utils seabios swtpm \
+    && rm -rf /var/lib/apt/lists/*
+
+# /work is supplied by an isolated, size-limited container volume at runtime.
+WORKDIR /work
+CMD ["/usr/bin/sleep", "infinity"]

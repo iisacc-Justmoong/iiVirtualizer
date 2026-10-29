@@ -1,0 +1,15 @@
+{
+  "action": "process-launch",
+  "instances": [
+    "account-a"
+  ],
+  "process": {
+    "key": "job-001",
+    "executable": "bin/application",
+    "working_directory": "work",
+    "arguments": [
+      "--batch"
+    ],
+    "memory_mib": 128
+  }
+}

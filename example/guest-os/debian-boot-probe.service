@@ -1,0 +1,14 @@
+[Unit]
+Description=iiVirtualizer guest boot evidence
+After=local-fs.target
+Before=ssh.service
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/ssh-keygen -A
+ExecStart=/bin/sh /usr/local/sbin/iiv-boot-probe
+StandardOutput=journal+console
+StandardError=journal+console
+
+[Install]
+WantedBy=multi-user.target

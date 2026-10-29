@@ -32,6 +32,10 @@ public:
         std::chrono::milliseconds timeout = std::chrono::seconds(10));
     [[nodiscard]] Result<void> remove(std::string_view id);
     [[nodiscard]] Result<std::string> guest_info(std::string_view id);
+    [[nodiscard]] Result<FileReply> files(std::string_view id,const FileRequest&,
+        std::chrono::milliseconds timeout=std::chrono::seconds(10));
+    [[nodiscard]] Result<ProcessReply> processes(std::string_view id,const ProcessRequest&,
+        std::chrono::milliseconds timeout=std::chrono::seconds(10));
     [[nodiscard]] ii::runtime::Future<Instance> submit(Operation, std::string id,
         std::chrono::milliseconds timeout = std::chrono::seconds(10));
     // Results retain input order and individual failures. A batch is not an

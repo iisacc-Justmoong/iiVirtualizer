@@ -1,0 +1,9 @@
+{
+  "action": "process-close-input",
+  "instances": [
+    "account-a"
+  ],
+  "process": {
+    "id": "RETURNED_HANDLE"
+  }
+}

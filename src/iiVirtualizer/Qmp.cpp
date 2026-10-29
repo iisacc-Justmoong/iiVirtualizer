@@ -1,4 +1,6 @@
 #include "Qmp.h"
+#include "FilesWire.h"
+#include "ProcessWire.h"
 #include <array>
 #include <cerrno>
 #include <cstring>
@@ -54,6 +56,7 @@ public:
     std::string line() {
         for(;;) {
             if(auto at=buffer_.find('\n');at!=std::string::npos) {
+                if(at>65536)throw std::runtime_error("Control response exceeds 64 KiB");
                 auto line=buffer_.substr(0,at);buffer_.erase(0,at+1);return line;
             }
             if(buffer_.size()>65536)throw std::runtime_error("Control response exceeds 64 KiB");
@@ -141,6 +144,33 @@ Result<std::string> agent(const Instance& vm,std::string_view command,std::chron
     });
 #else
     (void)vm;(void)command;(void)timeout;return core::fail(core::ErrorCode::unsupported,"Guest transport requires macOS or Linux");
+#endif
+}
+Result<FileReply> files_agent(const Instance& vm,const FileRequest& request,std::chrono::milliseconds timeout) {
+#if defined(__unix__) || defined(__APPLE__)
+    return transport([&]() -> Result<FileReply> {
+        Socket socket(vm.paths.agent,timeout);
+        socket.write("IIV1 "+vm.uuid+" info\n");const auto capabilities=socket.line();
+        if(!capabilities.starts_with("IIV1 "+vm.uuid+" INFO "))return core::fail(core::ErrorCode::invalid_argument,"Files guest UUID or protocol mismatch");
+        if(capabilities.find(" files_api=1 ")==std::string::npos)return core::fail(core::ErrorCode::unsupported,"Guest image has no Files API; update its stopped boot image");
+        const auto id=files_detail::nonce();socket.write(files_detail::encode_request(vm.uuid,id,request,timeout));
+        return files_detail::decode_reply(socket.line(),vm.uuid,id,request);
+    });
+#else
+    (void)vm;(void)request;(void)timeout;return core::fail(core::ErrorCode::unsupported,"Guest Files transport requires macOS or Linux");
+#endif
+}
+Result<ProcessReply> processes_agent(const Instance& vm,const ProcessRequest& request,std::chrono::milliseconds timeout) {
+#if defined(__unix__) || defined(__APPLE__)
+    return transport([&]() -> Result<ProcessReply> {
+        Socket socket(vm.paths.agent,timeout);socket.write("IIV1 "+vm.uuid+" info\n");const auto capabilities=socket.line();
+        if(!capabilities.starts_with("IIV1 "+vm.uuid+" INFO "))return core::fail(core::ErrorCode::invalid_argument,"Process guest UUID or protocol mismatch");
+        if(capabilities.find(" processes_api=1 ")==std::string::npos)return core::fail(core::ErrorCode::unsupported,"Guest image has no process API; update its stopped boot image");
+        const auto id=files_detail::nonce();socket.write(process_detail::encode_request(vm.uuid,id,request));
+        return process_detail::decode_reply(socket.line(),vm.uuid,id,request);
+    });
+#else
+    (void)vm;(void)request;(void)timeout;return core::fail(core::ErrorCode::unsupported,"Guest process transport requires macOS or Linux");
 #endif
 }
 } // namespace ii::virtualizer::detail

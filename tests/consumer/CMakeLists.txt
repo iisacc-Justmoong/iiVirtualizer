@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.31)
 project(iiVirtualizerInstalledConsumer LANGUAGES CXX)
 enable_testing()
-find_package(iiVirtualizer 0.1 CONFIG REQUIRED)
+find_package(iiVirtualizer 0.6 CONFIG REQUIRED)
 add_executable(consumer main.cpp)
 target_link_libraries(consumer PRIVATE iiVirtualizer::iiVirtualizer)
 add_test(NAME iiVirtualizer.InstalledConsumer COMMAND consumer "${CMAKE_CURRENT_BINARY_DIR}/state")

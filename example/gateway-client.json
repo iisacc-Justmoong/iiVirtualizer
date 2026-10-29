@@ -1,0 +1,12 @@
+{
+  "host": "vm-host.example.com",
+  "user": "virtualizer",
+  "port": 22,
+  "known_hosts": "ssh/known_hosts",
+  "identity_file": "ssh/id_ed25519",
+  "runtime": "primary",
+  "issuer": "https://iisacc.com",
+  "subject": "YOUR_IISACC_SUBJECT",
+  "credential_service": "com.iisacc.virtualizer.account-session",
+  "credential_key": "primary-session"
+}

@@ -2,6 +2,7 @@
 #include <iiVirtualizer/Qemu.h>
 #include "../src/iiVirtualizer/Store.h"
 #include <fstream>
+#include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 #include <thread>
@@ -46,6 +47,13 @@ Json outcomes(const std::vector<v::InstanceOutcome>& rows) {
 int main(int argc,char** argv) {
     try {
         check(argc==9,"Expected STATE QEMU KERNEL INITRAMFS ACCEL PREFIX PORT_A PORT_B");
+#if defined(__linux__)
+        const auto marker=std::getenv("IIV_TEST_CONTAINER");
+        check(marker && std::string(marker)=="1" && !v::fs::exists("/dev/kvm") && std::string(argv[5])=="tcg",
+              "Real VM tests require a TCG-only Linux test container without /dev/kvm");
+#else
+        check(false,"Real VM tests require the dedicated Linux test container");
+#endif
         v::QemuOptions options;options.aarch64_executable=v::fs::absolute(argv[2]);options.timeout=1s;
         // This is the only VM Runtime constructed by this controller process.
         v::Runtime runtime(argv[1],v::qemu_backend(options),{.workers=4,.capacity=16});

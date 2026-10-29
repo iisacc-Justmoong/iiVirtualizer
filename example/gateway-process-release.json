@@ -1,0 +1,9 @@
+{
+  "action": "process-release",
+  "instances": [
+    "account-a"
+  ],
+  "process": {
+    "id": "RETURNED_HANDLE"
+  }
+}

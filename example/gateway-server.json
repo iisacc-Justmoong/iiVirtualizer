@@ -1,0 +1,63 @@
+{
+  "authority": {
+    "endpoint": "https://iisacc.com/Account/GraphQL",
+    "timeout_ms": 10000
+  },
+  "runtimes": [
+    {
+      "id": "primary",
+      "root": "/srv/iivirtualizer/instances",
+      "qemu_aarch64": "/usr/bin/qemu-system-aarch64",
+      "workers": 4,
+      "capacity": 128,
+      "images": [
+        {
+          "id": "iios-arm64",
+          "kernel": "/srv/iivirtualizer/images/aarch64/Image",
+          "initramfs": "/srv/iivirtualizer/images/aarch64/initramfs.cpio.gz",
+          "architecture": "aarch64",
+          "accelerator": "kvm"
+        }
+      ]
+    }
+  ],
+  "grants": [
+    {
+      "subject": "YOUR_IISACC_SUBJECT",
+      "runtime": "primary",
+      "instance_prefix": "account-",
+      "actions": [
+        "list",
+        "create",
+        "describe",
+        "start",
+        "pause",
+        "resume",
+        "stop",
+        "force-stop",
+        "remove",
+        "guest-info",
+        "file-list",
+        "file-stat",
+        "file-read",
+        "file-create",
+        "file-write",
+        "file-mkdir",
+        "file-move",
+        "file-remove",
+        "process-launch",
+        "process-list",
+        "process-stat",
+        "process-read",
+        "process-write",
+        "process-close-input",
+        "process-stop",
+        "process-release",
+        "vm-monitor"
+      ],
+      "max_cpus": 4,
+      "max_memory_mib": 4096,
+      "max_disk_mib": 65536
+    }
+  ]
+}

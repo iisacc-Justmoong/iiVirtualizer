@@ -1,0 +1,12 @@
+{
+  "action": "process-read",
+  "instances": [
+    "account-a"
+  ],
+  "process": {
+    "id": "RETURNED_HANDLE",
+    "stream": "stdout",
+    "offset": 0,
+    "length": 16384
+  }
+}

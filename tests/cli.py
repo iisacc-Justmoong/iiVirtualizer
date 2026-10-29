@@ -58,6 +58,35 @@ assert Path(vm['kernel']).read_bytes()==b'fixture'
 plan=json.loads(run('plan','demo').stdout)
 assert str(root/'demo'/'data.raw') in plan[plan.index('-blockdev')+1]
 assert plan[plan.index('-nic')+1]=='none'
+# Foreign guests must retain their own PID 1 and command line after reopening.
+foreign_args='console=ttyAMA0 root=/dev/vda1 rw cloud-init=disabled'
+foreign=json.loads(run('create','debian','--kernel',kernel,'--initramfs',initrd,
+    '--kernel-args',foreign_args,'--graphics','virtio-gpu','--arch','aarch64','--accel','tcg',
+    '--cpu-model','max,pauth-impdef=on').stdout)
+assert foreign['kernel_command_line']==foreign_args
+assert foreign['graphics']=='virtio-gpu'
+assert foreign['cpu_model']=='max,pauth-impdef=on'
+foreign_plan=json.loads(run('plan','debian').stdout)
+assert foreign_plan[foreign_plan.index('-append')+1]==foreign_args
+assert foreign_plan[foreign_plan.index('-cpu')+1]=='max,pauth-impdef=on'
+assert 'ii.format_data=' not in ' '.join(foreign_plan)
+assert 'virtio-gpu-pci' in foreign_plan
+for args in [('--kernel-args','bad\nargument'),('--kernel-args','x'*4097),
+             ('--graphics','arbitrary-device'),('--cpu-model','bad\ncpu'),
+             ('--cpu-model','-bad'),('--cpu-model','x'*257)]:
+    run('create','invalid','--kernel',kernel,'--initramfs',initrd,*args,ok=False)
+# Version-one manifests remain readable with the original iiOS defaults.
+legacy=root/'demo'/'instance.json'
+legacy_json=json.loads(legacy.read_text())
+legacy_json.pop('kernel_command_line',None)
+legacy_json.pop('graphics',None)
+legacy_json.pop('cpu_model',None)
+legacy_json.pop('boot_disk_first',None)
+legacy.write_text(json.dumps(legacy_json))
+legacy_plan=json.loads(run('plan','demo').stdout)
+assert 'rdinit=/init' in legacy_plan[legacy_plan.index('-append')+1]
+assert legacy_plan[legacy_plan.index('-cpu')+1]==plan[plan.index('-cpu')+1]
+run('remove','debian')
 
 def server(mode):
     path=root/'demo'/'qmp.sock'

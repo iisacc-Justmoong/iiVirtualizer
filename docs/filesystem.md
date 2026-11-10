@@ -23,7 +23,7 @@ PID 1은 `/app/service`를 직접 실행하지 않고 정적 Linux 부팅 보조
 인스턴스 생성 시 부팅 이미지를 VM 디렉터리에 복사하므로 소스 이미지 재생성만으로 기존 VM이 바뀌지는 않는다. 같은 커널을 사용하는 정지 VM은 다음 도구로 initramfs를 갱신한다.
 
 ```sh
-python3 -B tools/upgrade_guest.py VM_ID --image build/images/aarch64
+python3 -B tools/upgrade_guest.py VM_ID --image resources/images/aarch64
 ```
 
 이 도구는 VM 정지·UUID·동일 커널·이미지 해시·프로파일을 확인하고 런타임과 동일한 인스턴스 잠금을 잡는다. 잠금 획득 후 QEMU 프로세스·제어 소켓 흔적이 없음을 다시 확인한 뒤 이전 initramfs와 메타데이터를 `build/guest-upgrades/`에 백업하고 새 initramfs만 원자적으로 교체한다. 디스크 해시와 인스턴스 메타데이터의 불변성을 확인하고 동일 이미지 적용은 변경 없이 끝낸다. 실행 중 VM·다른 커널·링크 경로·불일치 이미지는 거부한다. 커널 교체를 이 도구에서 숨겨 수행하지 않는다.

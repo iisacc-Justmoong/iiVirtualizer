@@ -1,12 +1,22 @@
 cmake_minimum_required(VERSION 3.31)
 project(iiVirtualizer VERSION 0.6.0 LANGUAGES CXX)
 set(CMAKE_CXX_EXTENSIONS OFF)
+include(cmake/InstallPrefix.cmake)
+iiv_set_install_prefix()
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(CTest)
-option(IIVIRTUALIZER_BUILD_EXAMPLE "Build embedding example" ON)
+option(BUILD_SHARED_LIBS "Build iiVirtualizer as a shared library" ON)
+if(EMSCRIPTEN AND BUILD_SHARED_LIBS)
+    set_property(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS TRUE)
+endif()
+option(IIVIRTUALIZER_BUILD_EXAMPLE "Build embedding example" OFF)
 option(IIVIRTUALIZER_BUILD_GATEWAY "Build account-authenticated SSH gateway" ON)
 option(IIVIRTUALIZER_BUILD_BUILDER_AGENT "Build the native guest build worker" ON)
+if(PROJECT_IS_TOP_LEVEL AND UNIX AND CMAKE_CURRENT_BINARY_DIR STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}/build")
+    include(cmake/ResourceLinks.cmake)
+    iiv_compat_links("${CMAKE_CURRENT_SOURCE_DIR}/resources" "${CMAKE_CURRENT_BINARY_DIR}")
+endif()
 if(IIVIRTUALIZER_BUILD_BUILDER_AGENT)
     find_package(iiSDKCore 0.20 CONFIG REQUIRED COMPONENTS Runtime)
 else()
@@ -16,7 +26,7 @@ find_package(iiJson 0.1 CONFIG REQUIRED)
 find_package(iiFileProviderNative 0.9 CONFIG REQUIRED HINTS "$ENV{HOME}/.local/SDK/iiFileProvider")
 include(cmake/SourceHeaders.cmake)
 iivirtualizer_forward_source_headers("${CMAKE_CURRENT_BINARY_DIR}/include" "${CMAKE_CURRENT_SOURCE_DIR}/src")
-add_library(iiVirtualizer STATIC
+add_library(iiVirtualizer
     src/Core/Types.cpp src/Runtime/Store.cpp
     src/Runtime/Runtime.cpp src/Runtime/Qmp.cpp src/Runtime/Qemu.cpp src/Protocol/GuestProtocol.cpp src/Files/Files.cpp src/Files/FilesWire.cpp src/Processes/Processes.cpp src/Processes/ProcessWire.cpp src/Protocol/BinaryWire.cpp)
 add_library(iiVirtualizer::iiVirtualizer ALIAS iiVirtualizer)
@@ -26,7 +36,20 @@ target_include_directories(iiVirtualizer PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
     PRIVATE src/Core src/Runtime src/Protocol src/Files src/Processes src/Gateway)
-set_target_properties(iiVirtualizer PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(iiVirtualizer PROPERTIES POSITION_INDEPENDENT_CODE ON WINDOWS_EXPORT_ALL_SYMBOLS ON)
+if(BUILD_SHARED_LIBS)
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        set_target_properties(iiVirtualizer PROPERTIES FRAMEWORK TRUE FRAMEWORK_VERSION A MACOSX_FRAMEWORK_IDENTIFIER "com.iisacc.iiVirtualizer")
+    elseif(APPLE)
+        set_property(TARGET iiVirtualizer APPEND PROPERTY INSTALL_RPATH "@loader_path")
+    elseif(UNIX AND NOT EMSCRIPTEN)
+        set_property(TARGET iiVirtualizer APPEND PROPERTY INSTALL_RPATH "$ORIGIN")
+    endif()
+    if(EMSCRIPTEN)
+        target_compile_options(iiVirtualizer PRIVATE -fPIC -sSIDE_MODULE=1)
+        target_link_options(iiVirtualizer PRIVATE -sSIDE_MODULE=1)
+    endif()
+endif()
 if(IIVIRTUALIZER_BUILD_GATEWAY)
     find_package(iiNetwork 0.5 CONFIG REQUIRED HINTS "$ENV{HOME}/.local/SDK/iiNetwork")
     find_package(iiAccountManagerNative 0.2 CONFIG REQUIRED HINTS "$ENV{HOME}/.local/SDK/iiAccountManager")
@@ -69,31 +92,64 @@ if(BUILD_TESTING)
     add_test(NAME iiVirtualizer.SourceLayout COMMAND ${CMAKE_COMMAND}
         "-DSOURCE_ROOT=${CMAKE_CURRENT_SOURCE_DIR}" -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/source_layout.cmake")
     find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
+    set(_iiv_test_workspace "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/tests/workspace_runner.py"
+        "${iiFileProviderNative_PYTHON_DIRECTORY}" "${CMAKE_CURRENT_SOURCE_DIR}/resources")
+    function(iiv_resource_test name)
+        add_test(NAME "${name}" COMMAND ${_iiv_test_workspace} ${ARGN})
+    endfunction()
+    add_test(NAME iiVirtualizer.ResourcePaths COMMAND "${CMAKE_COMMAND}" -E env
+        "PYTHONPATH=${iiFileProviderNative_PYTHON_DIRECTORY}" "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_resource_paths.py")
+    add_test(NAME iiVirtualizer.WorkspaceRunner COMMAND "${CMAKE_COMMAND}" -E env
+        "PYTHONPATH=${iiFileProviderNative_PYTHON_DIRECTORY}" "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_workspace_runner.py")
+    if(UNIX)
+        iiv_resource_test(iiVirtualizer.ResourceLinks "${Python3_EXECUTABLE}" -B
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_resource_links.py" "${CMAKE_COMMAND}"
+            "${iiFileProviderNative_PYTHON_DIRECTORY}" "@WORK@")
+        iiv_resource_test(iiVirtualizer.InstallPrefix "${Python3_EXECUTABLE}" -B
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_install_prefix.py" "${CMAKE_COMMAND}"
+            "${iiFileProviderNative_PYTHON_DIRECTORY}" "@WORK@")
+    endif()
+    add_executable(iiVirtualizer_cli_defaults tests/cli_defaults.cpp)
+    target_compile_features(iiVirtualizer_cli_defaults PRIVATE cxx_std_23)
+    add_test(NAME iiVirtualizer.CliDefaults COMMAND iiVirtualizer_cli_defaults "${CMAKE_CURRENT_SOURCE_DIR}")
     add_executable(iiVirtualizer_contracts tests/contracts.cpp)
     target_link_libraries(iiVirtualizer_contracts PRIVATE iiVirtualizer)
-    add_test(NAME iiVirtualizer.Contracts COMMAND iiVirtualizer_contracts "${CMAKE_CURRENT_BINARY_DIR}/contracts")
+    iiv_resource_test(iiVirtualizer.Contracts "$<TARGET_FILE:iiVirtualizer_contracts>" "@WORK@")
     add_executable(iiVirtualizer_provider_storage tests/provider_storage.cpp)
     target_link_libraries(iiVirtualizer_provider_storage PRIVATE iiVirtualizer)
-    add_test(NAME iiVirtualizer.ProviderStorage COMMAND iiVirtualizer_provider_storage "${CMAKE_CURRENT_BINARY_DIR}/provider-storage")
+    iiv_resource_test(iiVirtualizer.ProviderStorage "$<TARGET_FILE:iiVirtualizer_provider_storage>" "@WORK@/p")
     add_executable(iiVirtualizer_wire_contracts tests/wire_contracts.cpp)
     target_link_libraries(iiVirtualizer_wire_contracts PRIVATE iiVirtualizer iiJson::iiJson)
     add_test(NAME iiVirtualizer.WireContracts COMMAND iiVirtualizer_wire_contracts)
+    if(BUILD_SHARED_LIBS AND NOT CMAKE_CROSSCOMPILING)
+        add_test(NAME iiVirtualizer.SharedType COMMAND "${CMAKE_COMMAND}"
+            "-DTARGET_TYPE=$<TARGET_PROPERTY:iiVirtualizer,TYPE>"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/shared_target_type.cmake")
+        add_test(NAME iiVirtualizer.SharedLink COMMAND "${CMAKE_COMMAND}"
+            "-DIMAGE=$<TARGET_FILE:iiVirtualizer_wire_contracts>" "-DEXPECTED=$<TARGET_FILE:iiVirtualizer>"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/shared_link.cmake")
+    endif()
     add_executable(iiVirtualizer_multi tests/multi.cpp)
     target_link_libraries(iiVirtualizer_multi PRIVATE iiVirtualizer)
-    add_test(NAME iiVirtualizer.Multi COMMAND iiVirtualizer_multi "${CMAKE_CURRENT_BINARY_DIR}/multi")
-    add_executable(iiVirtualizer_multi_boot tests/multi_boot.cpp)
+    iiv_resource_test(iiVirtualizer.Multi "$<TARGET_FILE:iiVirtualizer_multi>" "@WORK@")
+    add_executable(iiVirtualizer_multi_boot tests/multi_boot.cpp tests/HostProcessId.cpp)
     target_link_libraries(iiVirtualizer_multi_boot PRIVATE iiVirtualizer iiJson::iiJson)
-    add_test(NAME iiVirtualizer.Cli COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/cli.py" "$<TARGET_FILE:iivirtualizer>" "${CMAKE_CURRENT_BINARY_DIR}/cli-tests")
+    add_executable(iiVirtualizer_host_process_id tests/host_process_id.cpp tests/HostProcessId.cpp)
+    target_compile_features(iiVirtualizer_host_process_id PRIVATE cxx_std_23)
+    add_test(NAME iiVirtualizer.HostProcessId COMMAND iiVirtualizer_host_process_id)
+    iiv_resource_test(iiVirtualizer.Cli "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/tests/cli.py" "$<TARGET_FILE:iivirtualizer>" "@WORK@")
     add_test(NAME iiVirtualizer.Packaging COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/packaging.py")
     add_test(NAME iiVirtualizer.TpmContainer COMMAND "${Python3_EXECUTABLE}" -B
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/tpm_container.py")
     set_tests_properties(iiVirtualizer.TpmContainer PROPERTIES SKIP_RETURN_CODE 77)
     add_test(NAME iiVirtualizer.WindowsX86BootContracts COMMAND "${Python3_EXECUTABLE}" -B
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/windows_x86_boot_contracts.py")
-    add_test(NAME iiVirtualizer.WindowsNativeProof COMMAND "${Python3_EXECUTABLE}" -B
-        "${CMAKE_CURRENT_SOURCE_DIR}/tests/windows_native_proof.py" "${CMAKE_CURRENT_BINARY_DIR}")
-    add_test(NAME iiVirtualizer.GuestOS COMMAND "${Python3_EXECUTABLE}" -B
-        "${CMAKE_CURRENT_SOURCE_DIR}/tests/os_guest_contracts.py" "${CMAKE_CURRENT_BINARY_DIR}/os-guest-contracts")
+    iiv_resource_test(iiVirtualizer.WindowsNativeProof "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/windows_native_proof.py" "@WORK@")
+    iiv_resource_test(iiVirtualizer.GuestOS "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/os_guest_contracts.py" "@WORK@/o")
     add_test(NAME iiVirtualizer.ContainerPolicy COMMAND "${Python3_EXECUTABLE}" -B
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/container_test.py" "$<TARGET_FILE:iiVirtualizer_multi_boot>")
     add_test(NAME iiVirtualizer.WatchdogContracts COMMAND "${Python3_EXECUTABLE}" -B
@@ -111,13 +167,13 @@ if(BUILD_TESTING)
     add_test(NAME iiVirtualizer.ChunkTransfer COMMAND "${Python3_EXECUTABLE}" -B
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/chunk_transfer.py")
     set_tests_properties(iiVirtualizer.ChunkTransfer PROPERTIES SKIP_RETURN_CODE 77)
-    add_test(NAME iiVirtualizer.BuildGuest COMMAND "${Python3_EXECUTABLE}" -B
-        "${CMAKE_CURRENT_SOURCE_DIR}/tests/build_guest.py" "$<TARGET_FILE:iivirtualizer>" "${CMAKE_CURRENT_BINARY_DIR}/bg")
-    add_test(NAME iiVirtualizer.BuildPayload COMMAND "${Python3_EXECUTABLE}" -B
-        "${CMAKE_CURRENT_SOURCE_DIR}/tests/build_payload.py" "${CMAKE_CURRENT_BINARY_DIR}/bp")
+    iiv_resource_test(iiVirtualizer.BuildGuest "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/build_guest.py" "$<TARGET_FILE:iivirtualizer>" "@WORK@")
+    iiv_resource_test(iiVirtualizer.BuildPayload "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/build_payload.py" "@WORK@/bp")
     if(IIVIRTUALIZER_BUILD_BUILDER_AGENT)
-        add_test(NAME iiVirtualizer.BuildAgent COMMAND "${Python3_EXECUTABLE}" -B
-            "${CMAKE_CURRENT_SOURCE_DIR}/tests/build_agent.py" "$<TARGET_FILE:iiv-build-agent>" "${CMAKE_CURRENT_BINARY_DIR}/ba")
+        iiv_resource_test(iiVirtualizer.BuildAgent "${Python3_EXECUTABLE}" -B
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/build_agent.py" "$<TARGET_FILE:iiv-build-agent>" "@WORK@/ba")
     endif()
     if(UNIX)
         add_executable(iiVirtualizer_process_fixture tests/process_fixture.cpp)
@@ -127,36 +183,36 @@ if(BUILD_TESTING)
         add_test(NAME iiVirtualizer.Processes COMMAND iiVirtualizer_processes "$<TARGET_FILE:iiVirtualizer_process_fixture>")
         add_executable(iiVirtualizer_files tests/files.cpp src/guest/FilesStore.cpp)
         target_link_libraries(iiVirtualizer_files PRIVATE iiVirtualizer iiFileProvider::Native)
-        add_test(NAME iiVirtualizer.Files COMMAND iiVirtualizer_files "${CMAKE_CURRENT_BINARY_DIR}/files")
+        iiv_resource_test(iiVirtualizer.Files "$<TARGET_FILE:iiVirtualizer_files>" "@WORK@/f")
         set(IISOCIETYCONTAINER_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/../iiSocietyContainer" CACHE PATH "Native Society package source")
         add_executable(iiVirtualizer_workspace tests/workspace.cpp src/guest/Workspace.cpp "${IISOCIETYCONTAINER_SOURCE}/DirectoryStorage.cpp")
         target_compile_features(iiVirtualizer_workspace PRIVATE cxx_std_23)
         target_include_directories(iiVirtualizer_workspace PRIVATE "${IISOCIETYCONTAINER_SOURCE}")
         target_link_libraries(iiVirtualizer_workspace PRIVATE iiFileProvider::Native)
-        add_test(NAME iiVirtualizer.Workspace COMMAND iiVirtualizer_workspace "${CMAKE_CURRENT_BINARY_DIR}/workspace")
-        add_test(NAME iiVirtualizer.GuestUpgrade COMMAND "${Python3_EXECUTABLE}" -B
-            "${CMAKE_CURRENT_SOURCE_DIR}/tests/upgrade_guest.py" "$<TARGET_FILE:iivirtualizer>" "${CMAKE_CURRENT_BINARY_DIR}/upgt")
+        iiv_resource_test(iiVirtualizer.Workspace "$<TARGET_FILE:iiVirtualizer_workspace>" "@WORK@/w")
+        iiv_resource_test(iiVirtualizer.GuestUpgrade "${Python3_EXECUTABLE}" -B
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/upgrade_guest.py" "$<TARGET_FILE:iivirtualizer>" "@WORK@")
     endif()
     if(IIVIRTUALIZER_BUILD_GATEWAY)
         add_executable(iiVirtualizer_gateway tests/gateway.cpp)
         target_link_libraries(iiVirtualizer_gateway PRIVATE iiVirtualizer iiJson::iiJson)
-        add_test(NAME iiVirtualizer.Gateway COMMAND iiVirtualizer_gateway "${CMAKE_CURRENT_BINARY_DIR}/gateway")
+        iiv_resource_test(iiVirtualizer.Gateway "$<TARGET_FILE:iiVirtualizer_gateway>" "@WORK@/g")
         if(UNIX)
             add_executable(iiVirtualizer_gateway_processes tests/gateway_processes.cpp src/guest/ProcessSupervisor.cpp)
             target_link_libraries(iiVirtualizer_gateway_processes PRIVATE iiVirtualizer iiJson::iiJson)
-            add_test(NAME iiVirtualizer.Gateway.Processes COMMAND iiVirtualizer_gateway_processes "${CMAKE_CURRENT_BINARY_DIR}/gproc" "$<TARGET_FILE:iiVirtualizer_process_fixture>")
+            iiv_resource_test(iiVirtualizer.Gateway.Processes "$<TARGET_FILE:iiVirtualizer_gateway_processes>" "@WORK@/gp" "$<TARGET_FILE:iiVirtualizer_process_fixture>")
             add_executable(iiVirtualizer_gateway_files tests/gateway_files.cpp src/guest/FilesStore.cpp)
             target_link_libraries(iiVirtualizer_gateway_files PRIVATE iiVirtualizer iiJson::iiJson iiFileProvider::Native)
-            add_test(NAME iiVirtualizer.Gateway.Files COMMAND iiVirtualizer_gateway_files "${CMAKE_CURRENT_BINARY_DIR}/gfiles")
+            iiv_resource_test(iiVirtualizer.Gateway.Files "$<TARGET_FILE:iiVirtualizer_gateway_files>" "@WORK@/gf")
         endif()
         if(UNIX)
             find_program(IIVIRTUALIZER_SSH NAMES ssh)
             find_program(IIVIRTUALIZER_SSHD NAMES sshd PATHS /usr/sbin /usr/local/sbin)
             find_program(IIVIRTUALIZER_OPENSSL NAMES openssl HINTS "${OPENSSL_ROOT_DIR}/bin")
             if(IIVIRTUALIZER_SSH AND IIVIRTUALIZER_SSHD AND IIVIRTUALIZER_OPENSSL)
-                add_test(NAME iiVirtualizer.Gateway.Ssh COMMAND "${Python3_EXECUTABLE}" -B
+                iiv_resource_test(iiVirtualizer.Gateway.Ssh "${Python3_EXECUTABLE}" -B
                     "${CMAKE_CURRENT_SOURCE_DIR}/tests/gateway_ssh.py" --gateway "$<TARGET_FILE:iivirtualizer-gateway>"
-                    --runtime "$<TARGET_FILE:iivirtualizer>" --root "${CMAKE_CURRENT_BINARY_DIR}/gssh"
+                    --runtime "$<TARGET_FILE:iivirtualizer>" --root "@WORK@/gs"
                     --ssh "${IIVIRTUALIZER_SSH}" --sshd "${IIVIRTUALIZER_SSHD}" --openssl "${IIVIRTUALIZER_OPENSSL}")
                 set_tests_properties(iiVirtualizer.Gateway.Ssh PROPERTIES TIMEOUT 180)
             endif()
@@ -164,7 +220,8 @@ if(BUILD_TESTING)
     endif()
 endif()
 install(TARGETS iiVirtualizer iivirtualizer EXPORT iiVirtualizerTargets
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} FRAMEWORK DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES src/Core/Types.h src/Runtime/Runtime.h src/Runtime/Qemu.h src/Protocol/GuestProtocol.h src/Files/Files.h src/Processes/Processes.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/iiVirtualizer)
 if(IIVIRTUALIZER_BUILD_GATEWAY)
     install(FILES src/Gateway/Gateway.h src/Gateway/GatewayAgent.h src/Gateway/VmClient.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/iiVirtualizer)

@@ -10,8 +10,8 @@
   },
   "source": {
     "path": "docs/guest-build.md",
-    "sha256": "c387f0239bc4d62b8823bb9af4e9d00a221c16ee1fe9e7346640b06a3dd94e9d",
-    "bytes": 14827,
+    "sha256": "95a9b2e57f60bd68790b841df29bcfa00cd68e62373d9205ae46cf4fb7f3e093",
+    "bytes": 14848,
     "line_count": 124,
     "encoding": "utf-8",
     "language": "ko"
@@ -258,9 +258,9 @@
       "kind": "fenced_code",
       "start_line": 33,
       "end_line": 45,
-      "raw": "```sh\npython3 -B tools/prepare_build_payload.py --sources-only \\\n  --output build/build-layer/linux-payload\npython3 -B tools/prepare_linux_build_guest.py \\\n  --image build/os-boot/repro/debian-v2/image.json \\\n  --payload build/build-layer/linux-payload \\\n  --output build/build-layer/linux-image\npython3 -B tools/guest_build.py --guest linux --id linux-build \\\n  --image build/build-layer/linux-image/image.json \\\n  --job build/build-layer/linux-payload/linux-job.json \\\n  --qemu build/dependencies/qemu-11.1.2/build/qemu-system-aarch64 \\\n  --output build/build-layer/linux-result\n```\n",
+      "raw": "```sh\npython3 -B tools/prepare_build_payload.py --sources-only \\\n  --output build/build-layer/linux-payload\npython3 -B tools/prepare_linux_build_guest.py \\\n  --image build/os-boot/repro/debian-v2/image.json \\\n  --payload build/build-layer/linux-payload \\\n  --output build/build-layer/linux-image\npython3 -B tools/guest_build.py --guest linux --id linux-build \\\n  --image build/build-layer/linux-image/image.json \\\n  --job build/build-layer/linux-payload/linux-job.json \\\n  --qemu resources/dependencies/qemu-11.1.2/build/qemu-system-aarch64 \\\n  --output build/build-layer/linux-result\n```\n",
       "language": "sh",
-      "code": "python3 -B tools/prepare_build_payload.py --sources-only \\\n  --output build/build-layer/linux-payload\npython3 -B tools/prepare_linux_build_guest.py \\\n  --image build/os-boot/repro/debian-v2/image.json \\\n  --payload build/build-layer/linux-payload \\\n  --output build/build-layer/linux-image\npython3 -B tools/guest_build.py --guest linux --id linux-build \\\n  --image build/build-layer/linux-image/image.json \\\n  --job build/build-layer/linux-payload/linux-job.json \\\n  --qemu build/dependencies/qemu-11.1.2/build/qemu-system-aarch64 \\\n  --output build/build-layer/linux-result\n",
+      "code": "python3 -B tools/prepare_build_payload.py --sources-only \\\n  --output build/build-layer/linux-payload\npython3 -B tools/prepare_linux_build_guest.py \\\n  --image build/os-boot/repro/debian-v2/image.json \\\n  --payload build/build-layer/linux-payload \\\n  --output build/build-layer/linux-image\npython3 -B tools/guest_build.py --guest linux --id linux-build \\\n  --image build/build-layer/linux-image/image.json \\\n  --job build/build-layer/linux-payload/linux-job.json \\\n  --qemu resources/dependencies/qemu-11.1.2/build/qemu-system-aarch64 \\\n  --output build/build-layer/linux-result\n",
       "closed": true
     },
     {
@@ -676,9 +676,9 @@
       "kind": "fenced_code",
       "start_line": 117,
       "end_line": 120,
-      "raw": "```sh\npython3 -B tools/bootstrap_qemu.py --with-display \\\n  --output build/qemu-display/build --targets x86_64\n```\n",
+      "raw": "```sh\npython3 -B tools/bootstrap_qemu.py --with-display \\\n  --output resources/dependencies/qemu-display/build --targets x86_64\n```\n",
       "language": "sh",
-      "code": "python3 -B tools/bootstrap_qemu.py --with-display \\\n  --output build/qemu-display/build --targets x86_64\n",
+      "code": "python3 -B tools/bootstrap_qemu.py --with-display \\\n  --output resources/dependencies/qemu-display/build --targets x86_64\n",
       "closed": true
     },
     {
@@ -867,7 +867,7 @@
       {
         "block_id": "b000029",
         "language": "sh",
-        "code": "python3 -B tools/prepare_build_payload.py --sources-only \\\n  --output build/build-layer/linux-payload\npython3 -B tools/prepare_linux_build_guest.py \\\n  --image build/os-boot/repro/debian-v2/image.json \\\n  --payload build/build-layer/linux-payload \\\n  --output build/build-layer/linux-image\npython3 -B tools/guest_build.py --guest linux --id linux-build \\\n  --image build/build-layer/linux-image/image.json \\\n  --job build/build-layer/linux-payload/linux-job.json \\\n  --qemu build/dependencies/qemu-11.1.2/build/qemu-system-aarch64 \\\n  --output build/build-layer/linux-result\n"
+        "code": "python3 -B tools/prepare_build_payload.py --sources-only \\\n  --output build/build-layer/linux-payload\npython3 -B tools/prepare_linux_build_guest.py \\\n  --image build/os-boot/repro/debian-v2/image.json \\\n  --payload build/build-layer/linux-payload \\\n  --output build/build-layer/linux-image\npython3 -B tools/guest_build.py --guest linux --id linux-build \\\n  --image build/build-layer/linux-image/image.json \\\n  --job build/build-layer/linux-payload/linux-job.json \\\n  --qemu resources/dependencies/qemu-11.1.2/build/qemu-system-aarch64 \\\n  --output build/build-layer/linux-result\n"
       },
       {
         "block_id": "b000039",
@@ -877,7 +877,7 @@
       {
         "block_id": "b000081",
         "language": "sh",
-        "code": "python3 -B tools/bootstrap_qemu.py --with-display \\\n  --output build/qemu-display/build --targets x86_64\n"
+        "code": "python3 -B tools/bootstrap_qemu.py --with-display \\\n  --output resources/dependencies/qemu-display/build --targets x86_64\n"
       }
     ],
     "links": [

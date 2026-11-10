@@ -1,14 +1,12 @@
 #include <iiVirtualizer/Runtime.h>
 #include <iiVirtualizer/Qemu.h>
+#include "HostProcessId.h"
 #include "../src/Runtime/Store.h"
 #include <fstream>
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 #include <thread>
-#if defined(__unix__) || defined(__APPLE__)
-#include <unistd.h>
-#endif
 
 namespace v=ii::virtualizer;
 using Json=ii::json::Value;
@@ -85,7 +83,7 @@ int main(int argc,char** argv) {
                 instances.emplace_back(std::move(value));
             }
             extra.emplace("event",Json(event));extra.emplace("instances",Json(std::move(instances)));
-            extra.emplace("controller_pid",Json(static_cast<std::uint64_t>(::getpid())));
+            extra.emplace("controller_pid",Json(v::testing::host_process_id()));
             extra.emplace("runtime_instances",Json(1));extra.emplace("workers",Json(runtime.execution_stats().workers));
             std::cout<<v::detail::json_text(Json(std::move(extra)))<<std::endl;
         };

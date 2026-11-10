@@ -1,0 +1,99 @@
+{
+  "format": "iisacc.agent-document",
+  "schema_version": 1,
+  "document_id": "urn:iisacc:document:ffe4ab837c3c932e42a76d1917bce3f58985f7a86c6bf5e4b980fc2a95a1159c",
+  "project": {
+    "id": "urn:iisacc:project:SDK%2FiiVirtualizer",
+    "name": "iiVirtualizer",
+    "root": "SDK/iiVirtualizer",
+    "kind": "sdk"
+  },
+  "source": {
+    "path": "docs/BuildLayout.md",
+    "sha256": "b5b09583fbea90d1140a763bac4671e3228d27c10cb6cfe9888dbb8f728c2004",
+    "bytes": 2151,
+    "line_count": 26,
+    "encoding": "utf-8",
+    "language": "ko"
+  },
+  "document": {
+    "title": "빌드와 가상 머신 리소스",
+    "role": "guide",
+    "authority": "markdown_source"
+  },
+  "blocks": [
+    {
+      "id": "b000001",
+      "kind": "heading",
+      "start_line": 1,
+      "end_line": 1,
+      "raw": "# 빌드와 가상 머신 리소스\n",
+      "level": 1,
+      "title": "빌드와 가상 머신 리소스"
+    },
+    {
+      "id": "b000002",
+      "kind": "blank",
+      "start_line": 2,
+      "end_line": 2,
+      "raw": "\n"
+    },
+    {
+      "id": "b000003",
+      "kind": "paragraph",
+      "start_line": 3,
+      "end_line": 7,
+      "raw": "기본 `build/`는 iiVirtualizer 모듈, CLI·게이트웨이·게스트 빌드 에이전트와\n활성화된 테스트의 컴파일 산출물에 사용한다. 예제는\n`IIVIRTUALIZER_BUILD_EXAMPLE=ON`으로 명시할 때만 빌드한다.\n기본 설치 경로는 `~/.local/SDK/iiVirtualizer`이며 CMake 또는 설치 스크립트에\n다른 prefix를 명시할 수 있다. 설치 파일은 기본적으로 `build/`에 두지 않는다.\n"
+    },
+    {
+      "id": "b000004",
+      "kind": "blank",
+      "start_line": 8,
+      "end_line": 8,
+      "raw": "\n"
+    },
+    {
+      "id": "b000005",
+      "kind": "paragraph",
+      "start_line": 9,
+      "end_line": 20,
+      "raw": "게스트 이미지와 다운로드는 `resources/images/`, VM 상태 기본값은\n`resources/vm/`, 게스트 빌드 VM 상태는 `resources/gb/`, 기존 OS 부팅 검증의\nVM 상태는 `resources/ob/`, QEMU 및 다른 외부 도구는 `resources/dependencies/`에 둔다. 짧은 VM 루트는 macOS의 Unix 소켓 경로 제한을 고려한다. 이전 상태와 이미지,\n게스트 빌드 결과는 삭제하지 않고 이 리소스 트리로 이전한다. 예전 절대 경로를\n참조하는 설치본과 메타데이터를 위해 기존 경로에 리소스 링크를 둔다. macOS와\nLinux의 최상위 `build/` 구성은 필요한 기존 링크를 다시 만들고, 다른 파일이\n같은 이름을 차지하면 덮어쓰지 않고 중지한다. Windows에서는 기존 링크를 자동\n생성하지 않으며 새 프로그램의 기본 경로는 직접 `resources/`를 사용한다.\n과거 `build/os-boot`와 `build/build-layer` 경로도 이 호환 링크로 이어진다.\n이 두 기록 영역의 최상위에 있던 재생성 가능한 `.log`와 pip 캐시는 정리했으며,\n과거 검증 문서의 로그 경로가 현재 남아 있다는 뜻은 아니다. VM 디스크·이미지와\n기존 작업 소스는 보존한다.\n"
+    },
+    {
+      "id": "b000006",
+      "kind": "blank",
+      "start_line": 21,
+      "end_line": 21,
+      "raw": "\n"
+    },
+    {
+      "id": "b000007",
+      "kind": "paragraph",
+      "start_line": 22,
+      "end_line": 26,
+      "raw": "테스트는 iiFileProvider Python 어댑터로 `resources/.t/`에 각자 고유한\n작업 공간을 만들고 성공과 실패 시 정리한다. 짧은 경로는 macOS의 Unix 소켓\n경로 길이 제한을 지키기 위한 것이다. VM 부팅 검증은 기존 정책대로 전용\nLinux 컨테이너의 TCG에서만 선택적으로 수행한다. 경로 검사와 모의 계약 테스트의\n성공은 실제 VM 실행 증거가 아니다.\n"
+    }
+  ],
+  "outline": [
+    {
+      "block_id": "b000001",
+      "parent_id": null,
+      "level": 1,
+      "title": "빌드와 가상 머신 리소스",
+      "anchor": "빌드와-가상-머신-리소스",
+      "start_line": 1
+    }
+  ],
+  "indexes": {
+    "directive_candidates": [],
+    "commands": [],
+    "links": [],
+    "tables": []
+  },
+  "provenance": {
+    "generator": "workspace-docs",
+    "version": "1.0.0",
+    "profile": "lossless-blocks-v1",
+    "derived": true
+  }
+}

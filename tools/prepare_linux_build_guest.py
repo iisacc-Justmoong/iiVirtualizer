@@ -6,15 +6,16 @@ from pathlib import Path
 import shutil
 import subprocess
 from prepare_os_guests import ROOT,debugfs,digest,generated_path,quote
+from resource_paths import dependency_root
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--image',type=Path,required=True)
     parser.add_argument('--payload',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
-    parser.add_argument('--debugfs',type=Path,default=ROOT/'build/dependencies/e2fsprogs-1.47.2/build/debugfs/debugfs')
+    parser.add_argument('--debugfs',type=Path,default=dependency_root(ROOT)/'e2fsprogs-1.47.2/build/debugfs/debugfs')
     args=parser.parse_args();output=generated_path(args.output)
-    if output.exists():raise ValueError('Use a fresh build image output')
+    if output.exists():raise ValueError('Use a fresh resource image output')
     recipe=json.loads(args.image.read_text())
     for key,value in recipe['artifact_sha256'].items():
         if digest(recipe[key])!=value:raise ValueError('Base image changed: '+key)

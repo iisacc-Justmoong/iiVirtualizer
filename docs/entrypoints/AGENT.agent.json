@@ -10,8 +10,8 @@
   },
   "source": {
     "path": "AGENT.md",
-    "sha256": "de34511dfed6c0b549cb90d20ccb16cec26cb11f4b828d151a2bfc3352509fc2",
-    "bytes": 4438,
+    "sha256": "1ed0532c7fa8affa174a1676b10a0f3ef6973294078a9c0e52e36117939e19e2",
+    "bytes": 4456,
     "line_count": 33,
     "encoding": "utf-8",
     "language": "ko"
@@ -57,7 +57,7 @@
       "kind": "paragraph",
       "start_line": 5,
       "end_line": 5,
-      "raw": "SDK 소스와 같은 이름의 헤더는 src/의 책임별 디렉터리에 함께 둔다. 게스트 프로그램은 src/guest/에 둔다. README.md는 영어, docs/는 한국어로 작성한다. 소스 수정에는 테스트와 문서 갱신이 따른다. 빌드와 검증 증거는 build/에, 실행에 필요한 이미지·펌웨어와 지속할 게스트 상태는 resources/에 둔다. 다른 SDK의 기존 빌드나 설치본을 덮어쓰지 않는다.\n"
+      "raw": "SDK 소스와 같은 이름의 헤더는 src/의 책임별 디렉터리에 함께 둔다. 게스트 프로그램은 src/guest/에 둔다. README.md는 영어, docs/는 한국어로 작성한다. 소스 수정에는 테스트와 문서 갱신이 따른다. 모듈과 테스트 빌드 산출물은 build/에, 검증 임시 데이터·이미지·펌웨어와 지속할 게스트 상태는 resources/에 둔다. 다른 SDK의 기존 빌드나 설치본을 덮어쓰지 않는다.\n"
     },
     {
       "id": "b000006",

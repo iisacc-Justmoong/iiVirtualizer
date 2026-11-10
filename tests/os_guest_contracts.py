@@ -59,7 +59,8 @@ assert calls == [('describe',)]
 root = generated_path(Path(sys.argv[1]))
 assert generated_path(Path(__file__).resolve().parents[1] / 'resources' / 'platform-guests' / 'sample')
 assert resource_root(Path(__file__).resolve().parents[1] / 'resources' / 'platform-guests' / 'sample')
-rejected(lambda: resource_root(root))
+assert resource_root(root) == root
+rejected(lambda: resource_root(Path(__file__).resolve().parents[1] / 'build/outside-resources'))
 root.mkdir(parents=True, exist_ok=True)
 fixture = root / 'checksum-fixture'
 fixture.write_bytes(b'original upstream')
@@ -68,7 +69,7 @@ source = {'checksum_algorithm': 'sha512', 'checksum': hashlib.sha512(fixture.rea
 verify(fixture, source)
 fixture.write_bytes(b'altered upstream')
 rejected(lambda: verify(fixture, source))
-rejected(lambda: generated_path(root.parents[2] / 'outside-build'))
+rejected(lambda: generated_path(Path(__file__).resolve().parents[1] / 'build/outside-resources'))
 
 disk = bytearray(128 * 512)
 disk[512:520] = b'EFI PART'

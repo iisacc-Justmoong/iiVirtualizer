@@ -11,6 +11,7 @@ import time
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'tools'))
 spec = importlib.util.spec_from_file_location('guest_upgrade', ROOT / 'tools/upgrade_guest.py')
 module = importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 runtime = Path(sys.argv[1]).resolve()
@@ -27,16 +28,16 @@ before = json.loads(created.stdout)
 metadata = {'filesystem_profile': 'society-v1', 'sandbox_sha256': 'test-launcher', 'kernel_sha256': module.digest(image / 'Image'), 'initramfs_sha256': module.digest(image / 'initramfs.cpio.gz')}
 (image / 'image.json').write_text(json.dumps(metadata))
 volume = module.digest(state / 'demo/data.raw')
-result = module.upgrade('demo', image, state, runtime)
+result = module.upgrade('demo', image, state, runtime, backup_root=root / 'backups')
 assert result['changed'] and result['data_unchanged'] and result['uuid'] == before['uuid']
 assert (state / 'demo/initramfs').read_bytes() == b'new-profile-initramfs'
 assert (Path(result['backup']) / 'initramfs.before').read_bytes() == b'old-initramfs'
 assert module.digest(state / 'demo/data.raw') == volume
-assert not module.upgrade('demo', image, state, runtime)['changed']
+assert not module.upgrade('demo', image, state, runtime, backup_root=root / 'backups')['changed']
 
 def rejected():
     try:
-        module.upgrade('demo', image, state, runtime)
+        module.upgrade('demo', image, state, runtime, backup_root=root / 'backups')
     except (ValueError, BlockingIOError):
         pass
     else:

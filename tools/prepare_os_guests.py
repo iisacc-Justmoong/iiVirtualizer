@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare pinned Debian/Android verification guests beneath build/."""
+"""Prepare pinned Debian/Android verification guests beneath resources/."""
 import argparse
 import gzip
 import hashlib
@@ -13,15 +13,13 @@ import subprocess
 import tarfile
 
 from prepare_guest import cpio_bytes, unpack_cpio
+from resource_paths import dependency_root, resource_path
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def generated_path(path):
-    path = Path(path).resolve()
-    if not any(directory in path.parents for directory in (ROOT / 'build', ROOT / 'resources')):
-        raise ValueError('Guest files must remain beneath project build/ or resources/')
-    return path
+    return resource_path(ROOT, path)
 
 
 def digest(path, algorithm='sha256'):
@@ -215,12 +213,12 @@ def main():
     parser.add_argument('--source', type=Path, help='Verified local archive; otherwise download the pinned source')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--debugfs', type=Path,
-        default=ROOT / 'build/dependencies/e2fsprogs-1.47.2/build/debugfs/debugfs')
+        default=dependency_root(ROOT) / 'e2fsprogs-1.47.2/build/debugfs/debugfs')
     parser.add_argument('--mke2fs', type=Path, default=Path(shutil.which('mke2fs') or 'mke2fs'))
     args = parser.parse_args()
     output = generated_path(args.output)
     if output.exists():
-        parser.error('Output already exists; select a fresh build/ directory')
+        parser.error('Output already exists; select a fresh resources/ directory')
     sources = json.loads((ROOT / 'tools' / 'os_sources.json').read_text())
     source = sources[('debian_13_arm64' if args.arch == 'aarch64' else 'debian_13_amd64')
                      if args.guest == 'debian' else 'android_x86_64_9_0_r2']

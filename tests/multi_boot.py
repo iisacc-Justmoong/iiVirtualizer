@@ -21,13 +21,13 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--accel',choices=['hvf','kvm','tcg'],required=True)
     parser.add_argument('--qemu',type=Path,required=True)
-    parser.add_argument('--image',type=Path,default=ROOT/'build/images/aarch64')
+    parser.add_argument('--image',type=Path,default=ROOT/'resources/images/aarch64')
     parser.add_argument('--controller',type=Path,default=ROOT/'build/iiVirtualizer_multi_boot')
     args=parser.parse_args()
     require_test_container(args.accel)
     prefix=args.accel+'-'+uuid.uuid4().hex[:6]
-    state=ROOT/'build/mv'/prefix
-    evidence=ROOT/'build/multi-verification'/prefix
+    state=ROOT/'resources/.state/mv'/prefix
+    evidence=ROOT/'resources/.state/multi-verification'/prefix
     evidence.mkdir(parents=True)
     probes=[socket.socket(),socket.socket()]
     for probe in probes:probe.bind(('127.0.0.1',0))

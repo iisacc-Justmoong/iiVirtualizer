@@ -40,7 +40,7 @@ python3 -B tools/prepare_linux_build_guest.py \
 python3 -B tools/guest_build.py --guest linux --id linux-build \
   --image build/build-layer/linux-image/image.json \
   --job build/build-layer/linux-payload/linux-job.json \
-  --qemu build/dependencies/qemu-11.1.2/build/qemu-system-aarch64 \
+  --qemu resources/dependencies/qemu-11.1.2/build/qemu-system-aarch64 \
   --output build/build-layer/linux-result
 ```
 
@@ -116,7 +116,7 @@ IIV_GUEST_APP_OK os=Windows arch=AMD64 result=5050 nonce=947712ab31b9459a8e18f46
 
 ```sh
 python3 -B tools/bootstrap_qemu.py --with-display \
-  --output build/qemu-display/build --targets x86_64
+  --output resources/dependencies/qemu-display/build --targets x86_64
 ```
 
 이 경로에는 `pixman-1` 개발 패키지가 필요하다. 이미 헤드리스 엔진으로 설정한 디렉터리를 `--with-display`로 조용히 재사용하지 않으며, 새 출력 경로를 요구한다. 기존 VM이 사용하는 엔진을 덮어쓰지 않는다.

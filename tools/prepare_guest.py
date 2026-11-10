@@ -13,6 +13,7 @@ import struct
 import subprocess
 import tarfile
 import urllib.request
+from resource_paths import image_root, resource_path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -95,14 +96,14 @@ def main():
     parser.add_argument('--process-launcher', type=Path, help='Static ii-process launcher (default: sibling of --init)')
     parser.add_argument('--program', action='append', default=[], metavar='NAME=ELF', help='Trusted static guest program catalog entry')
     parser.add_argument('--download-only', action='store_true')
-    parser.add_argument('--output', type=Path, default=ROOT / 'build' / 'images' / 'aarch64')
+    parser.add_argument('--output', type=Path, default=image_root(ROOT) / 'aarch64')
     args = parser.parse_args()
-    output = args.output.resolve()
-    if ROOT / 'build' not in output.parents:
-        raise ValueError('Generated images must remain beneath this project build/')
+    output = resource_path(ROOT, args.output)
+    if not output.is_relative_to(image_root(ROOT)) or output == image_root(ROOT):
+        raise ValueError('Generated images must remain beneath resources/images/')
     output.mkdir(parents=True, exist_ok=True)
     sources = json.loads((ROOT / 'tools' / 'sources.json').read_text())
-    archives = ROOT / 'build' / 'images' / 'downloads'
+    archives = image_root(ROOT) / 'downloads'
     netboot = download(sources['alpine_netboot_aarch64'], archives)
     root = download(sources['alpine_root_aarch64'], archives)
     cached = output / 'upstream.json'

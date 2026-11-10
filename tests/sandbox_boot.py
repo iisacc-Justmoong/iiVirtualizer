@@ -27,9 +27,9 @@ def main():
     args = parser.parse_args()
     require_test_container(args.accel)
     token = args.accel + '-' + uuid.uuid4().hex[:6]
-    evidence = ROOT / 'build/fs-verification' / token
+    evidence = ROOT / 'resources/.state/fs-verification' / token
     evidence.mkdir(parents=True)
-    state = ROOT / 'build/fsv'
+    state = ROOT / 'resources/.state/fsv'
     common = ['--root', str(state), '--qemu-aarch64', str(args.qemu.resolve())]
     records, created = [], []
     report = {'passed': False, 'accelerator': args.accel, 'hardware_virtualization': args.accel != 'tcg', 'filesystem_profile': 'society-v1'}

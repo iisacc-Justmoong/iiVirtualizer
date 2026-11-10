@@ -28,7 +28,7 @@ def main():
     parser.add_argument('--guest',choices=['linux','windows'],required=True)
     parser.add_argument('--runtime',type=Path,default=ROOT/'build/iivirtualizer')
     parser.add_argument('--qemu',type=Path,required=True)
-    parser.add_argument('--root',type=Path,default=ROOT/'build/gb')
+    parser.add_argument('--root',type=Path,default=ROOT/'resources/gb')
     parser.add_argument('--id',required=True)
     parser.add_argument('--job',type=Path,required=True)
     parser.add_argument('--image',type=Path)
@@ -43,7 +43,7 @@ def main():
     args=parser.parse_args();require_test_container('tcg')
     output=generated_path(args.output);root=generated_path(args.root)
     if output.exists():
-        raise ValueError('Choose a fresh evidence directory beneath build/ or resources/')
+        raise ValueError('Choose a fresh evidence directory beneath resources/')
     output.mkdir(parents=True);(output/'artifacts').mkdir();job=json.loads(args.job.read_text())
     commands=[]
     architecture='x86_64' if args.guest=='windows' else json.loads(args.image.read_text())['architecture']

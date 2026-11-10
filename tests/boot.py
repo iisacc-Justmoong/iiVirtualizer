@@ -18,13 +18,13 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--accel',choices=['hvf','kvm','tcg'],required=True)
     parser.add_argument('--qemu',type=Path,required=True)
-    parser.add_argument('--image',type=Path,default=ROOT/'build/images/aarch64')
+    parser.add_argument('--image',type=Path,default=ROOT/'resources/images/aarch64')
     parser.add_argument('--network',action='store_true')
     args=parser.parse_args()
     require_test_container(args.accel)
     identity='s-'+args.accel+'-'+uuid.uuid4().hex[:6]
-    state=ROOT/'build/vms'
-    evidence=ROOT/'build/verification'/identity
+    state=ROOT/'resources/.state/vms'
+    evidence=ROOT/'resources/.state/verification'/identity
     evidence.mkdir(parents=True)
     log=[]
     cli=ROOT/'build/iivirtualizer'

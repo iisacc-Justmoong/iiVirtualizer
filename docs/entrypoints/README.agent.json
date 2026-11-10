@@ -10,9 +10,9 @@
   },
   "source": {
     "path": "README.md",
-    "sha256": "25cd5558d68e872f86e8ce20f384b3ad24532d5f8a22f5f2c66a349d004efff4",
-    "bytes": 9707,
-    "line_count": 79,
+    "sha256": "ec9f03c6ababa7e3fa38ff0fed40641d7138a4f2711310ce8a12e571909b3027",
+    "bytes": 10135,
+    "line_count": 84,
     "encoding": "utf-8",
     "language": "en"
   },
@@ -171,22 +171,22 @@
       "id": "b000021",
       "kind": "paragraph",
       "start_line": 28,
-      "end_line": 34,
-      "raw": "Disk boot also supports ARM64 UEFI code with instance-owned variable storage,\nUSB installation media, NVMe storage and a RAM framebuffer. Debian cloud-image\npreparation and boot probes select the matching ARM64 or x86-64 serial console.\nAn optional per-instance `--cpu-model` selects a QEMU CPU model and properties;\ninstances without it keep their existing architecture and accelerator defaults.\nSee [the platform guest guide](docs/platform-guests.md) for setup, ownership,\nexecution evidence and the limits of each guest profile.\n"
+      "end_line": 31,
+      "raw": "The multi-VM test controller obtains its host process ID using the native\nWindows or POSIX interface, so its test source does not require POSIX\n`getpid()` on Windows. This source adjustment does not implement or validate a\nWindows persistent host backend; that backend still reports unsupported.\n"
     },
     {
       "id": "b000022",
       "kind": "blank",
-      "start_line": 35,
-      "end_line": 35,
+      "start_line": 32,
+      "end_line": 32,
       "raw": "\n"
     },
     {
       "id": "b000023",
       "kind": "paragraph",
-      "start_line": 36,
+      "start_line": 33,
       "end_line": 39,
-      "raw": "Run tests that boot a VM only inside a dedicated, resource-limited Linux\ncontainer. Use QEMU TCG inside that container and expose only the test's own\ninputs and outputs. The container runtime itself still relies on the host's\nvirtualization and storage; it does not eliminate host-level failure risk.\n"
+      "raw": "Disk boot also supports ARM64 UEFI code with instance-owned variable storage,\nUSB installation media, NVMe storage and a RAM framebuffer. Debian cloud-image\npreparation and boot probes select the matching ARM64 or x86-64 serial console.\nAn optional per-instance `--cpu-model` selects a QEMU CPU model and properties;\ninstances without it keep their existing architecture and accelerator defaults.\nSee [the platform guest guide](docs/platform-guests.md) for setup, ownership,\nexecution evidence and the limits of each guest profile.\n"
     },
     {
       "id": "b000024",
@@ -197,217 +197,231 @@
     },
     {
       "id": "b000025",
-      "kind": "fenced_code",
+      "kind": "paragraph",
       "start_line": 41,
-      "end_line": 46,
+      "end_line": 44,
+      "raw": "Run tests that boot a VM only inside a dedicated, resource-limited Linux\ncontainer. Use QEMU TCG inside that container and expose only the test's own\ninputs and outputs. The container runtime itself still relies on the host's\nvirtualization and storage; it does not eliminate host-level failure risk.\n"
+    },
+    {
+      "id": "b000026",
+      "kind": "blank",
+      "start_line": 45,
+      "end_line": 45,
+      "raw": "\n"
+    },
+    {
+      "id": "b000027",
+      "kind": "fenced_code",
+      "start_line": 46,
+      "end_line": 51,
       "raw": "```sh\ncmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \\\n  -DCMAKE_PREFIX_PATH=\"$HOME/.local/SDK/iiSDKCore;$HOME/.local/SDK/iiJson;$HOME/.local/SDK/iiFileProvider;$HOME/.local/SDK/iiNetwork;$HOME/.local/SDK/iiAccountManager\"\ncmake --build build --parallel 4\nctest --test-dir build --output-on-failure\n```\n",
       "language": "sh",
       "code": "cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \\\n  -DCMAKE_PREFIX_PATH=\"$HOME/.local/SDK/iiSDKCore;$HOME/.local/SDK/iiJson;$HOME/.local/SDK/iiFileProvider;$HOME/.local/SDK/iiNetwork;$HOME/.local/SDK/iiAccountManager\"\ncmake --build build --parallel 4\nctest --test-dir build --output-on-failure\n",
       "closed": true
     },
     {
-      "id": "b000026",
-      "kind": "blank",
-      "start_line": 47,
-      "end_line": 47,
-      "raw": "\n"
-    },
-    {
-      "id": "b000027",
-      "kind": "paragraph",
-      "start_line": 48,
-      "end_line": 48,
-      "raw": "Build the optional external QEMU engine locally with `python3 tools/bootstrap_qemu.py`. Dependency builds and validation outputs belong under `build/`; reusable guest images, firmware and VM state belong under `resources/`. An existing QEMU can be selected with `--qemu-aarch64` or `--qemu-x86_64`.\n"
-    },
-    {
       "id": "b000028",
       "kind": "blank",
-      "start_line": 49,
-      "end_line": 49,
+      "start_line": 52,
+      "end_line": 52,
       "raw": "\n"
     },
     {
       "id": "b000029",
       "kind": "paragraph",
-      "start_line": 50,
-      "end_line": 50,
-      "raw": "Guest construction and the workspace contract tests reuse the native `DirectoryStorage` implementation from the sibling iiSocietyContainer source tree; `IISOCIETYCONTAINER_SOURCE` can select another checkout. Cross-compiling the guest requires both C and C++ compilers targeting the same Linux sysroot.\n"
+      "start_line": 53,
+      "end_line": 53,
+      "raw": "Build the optional external QEMU engine locally with `python3 tools/bootstrap_qemu.py`. The module and test binaries use `build/`. Guest images, VM state, external engine sources and verification data live under `resources/`; examples are enabled explicitly with `-DIIVIRTUALIZER_BUILD_EXAMPLE=ON`. An existing QEMU can be selected with `--qemu-aarch64` or `--qemu-x86_64`.\n"
     },
     {
       "id": "b000030",
       "kind": "blank",
-      "start_line": 51,
-      "end_line": 51,
+      "start_line": 54,
+      "end_line": 54,
       "raw": "\n"
     },
     {
       "id": "b000031",
       "kind": "paragraph",
-      "start_line": 52,
-      "end_line": 52,
-      "raw": "The installed CMake package exports `iiVirtualizer::iiVirtualizer`. Run `./install-native.sh` to stage it under `build/install`. iiSDKCore, iiJson and iiFileProviderNative remain explicit package dependencies; QEMU is selected at runtime. `tests/consumer` verifies consumption through the installed package.\n"
+      "start_line": 55,
+      "end_line": 55,
+      "raw": "Guest construction and the workspace contract tests reuse the native `DirectoryStorage` implementation from the sibling iiSocietyContainer source tree; `IISOCIETYCONTAINER_SOURCE` can select another checkout. Cross-compiling the guest requires both C and C++ compilers targeting the same Linux sysroot.\n"
     },
     {
       "id": "b000032",
       "kind": "blank",
-      "start_line": 53,
-      "end_line": 53,
+      "start_line": 56,
+      "end_line": 56,
       "raw": "\n"
     },
     {
       "id": "b000033",
       "kind": "paragraph",
-      "start_line": 54,
-      "end_line": 54,
-      "raw": "Gateway builds additionally use iiNetwork, iiAccountManagerNative and OpenSSL 3 or later. Set `OPENSSL_ROOT_DIR` for a keg-only installation. `-DIIVIRTUALIZER_BUILD_GATEWAY=OFF` excludes the gateway API and executable.\n"
+      "start_line": 57,
+      "end_line": 57,
+      "raw": "The installed CMake package exports `iiVirtualizer::iiVirtualizer`. Run `./install-native.sh` to install it under `~/.local/SDK/iiVirtualizer`, or pass an explicit installation prefix. iiSDKCore, iiJson and iiFileProviderNative remain explicit package dependencies; QEMU is selected at runtime. `tests/consumer` verifies consumption through the installed package.\n"
     },
     {
       "id": "b000034",
       "kind": "blank",
-      "start_line": 55,
-      "end_line": 55,
+      "start_line": 58,
+      "end_line": 58,
       "raw": "\n"
     },
     {
       "id": "b000035",
       "kind": "paragraph",
-      "start_line": 56,
-      "end_line": 56,
-      "raw": "The **VmClient** binds an application runtime to one remote VM with typed process, file, monitoring and lifecycle calls. Managed processes survive SSH disconnects and expose binary stdin/stdout/stderr, cursor-based bounded output, retained exit status, idempotent launch keys and explicit release. Linux cgroups contain descendants and enforce memory/task budgets; application execution retains the mandatory Files-only sandbox. Lightweight VM metrics and process metadata are separate from log payloads. See the [Korean process API guide](docs/processes-api.md) and `example/gateway-process-*.json`.\n"
+      "start_line": 59,
+      "end_line": 59,
+      "raw": "Gateway builds additionally use iiNetwork, iiAccountManagerNative and OpenSSL 3 or later. Set `OPENSSL_ROOT_DIR` for a keg-only installation. `-DIIVIRTUALIZER_BUILD_GATEWAY=OFF` excludes the gateway API and executable.\n"
     },
     {
       "id": "b000036",
       "kind": "blank",
-      "start_line": 57,
-      "end_line": 57,
+      "start_line": 60,
+      "end_line": 60,
       "raw": "\n"
     },
     {
       "id": "b000037",
       "kind": "paragraph",
-      "start_line": 58,
-      "end_line": 58,
-      "raw": "Guest-native builds can boot Debian and Windows Server Core, compile iiSDKCore plus a C++23 application inside the guest, execute the resulting application, and stream native ELF/PE artifacts back to the host. Foreign CPU architectures select QEMU TCG automatically; matching architectures retain native acceleration. Disk boot profiles support owned installer/payload media, SATA, standard VGA and installation reboots. See the [Korean guest build guide](docs/guest-build.md), `tools/prepare_build_payload.py`, and `tools/guest_build.py`.\n"
+      "start_line": 61,
+      "end_line": 61,
+      "raw": "The **VmClient** binds an application runtime to one remote VM with typed process, file, monitoring and lifecycle calls. Managed processes survive SSH disconnects and expose binary stdin/stdout/stderr, cursor-based bounded output, retained exit status, idempotent launch keys and explicit release. Linux cgroups contain descendants and enforce memory/task budgets; application execution retains the mandatory Files-only sandbox. Lightweight VM metrics and process metadata are separate from log payloads. See the [Korean process API guide](docs/processes-api.md) and `example/gateway-process-*.json`.\n"
     },
     {
       "id": "b000038",
       "kind": "blank",
-      "start_line": 59,
-      "end_line": 59,
+      "start_line": 62,
+      "end_line": 62,
       "raw": "\n"
     },
     {
       "id": "b000039",
       "kind": "paragraph",
-      "start_line": 60,
-      "end_line": 60,
-      "raw": "Earlier host-based verification on an Apple Silicon Mac covered Debian 13 ARM64/HVF and Windows Server 2025 Standard Evaluation Core x86_64/TCG. Both guests rebuilt iiSDKCore 0.20, compiled the same Runtime/Concurrent application, passed its CTest, executed it with result 5050, and returned native artifacts. The aggregate evidence and ready-to-copy artifact bundles are under `build/build-layer/verification.json` and `build/build-layer/artifacts/`. Those historical runs preceded the container-only testing policy and do not establish container-based verification.\n"
+      "start_line": 63,
+      "end_line": 63,
+      "raw": "Guest-native builds can boot Debian and Windows Server Core, compile iiSDKCore plus a C++23 application inside the guest, execute the resulting application, and stream native ELF/PE artifacts back to the host. Foreign CPU architectures select QEMU TCG automatically; matching architectures retain native acceleration. Disk boot profiles support owned installer/payload media, SATA, standard VGA and installation reboots. See the [Korean guest build guide](docs/guest-build.md), `tools/prepare_build_payload.py`, and `tools/guest_build.py`.\n"
     },
     {
       "id": "b000040",
       "kind": "blank",
-      "start_line": 61,
-      "end_line": 61,
+      "start_line": 64,
+      "end_line": 64,
       "raw": "\n"
     },
     {
       "id": "b000041",
       "kind": "paragraph",
-      "start_line": 62,
-      "end_line": 62,
-      "raw": "The native build worker is enabled by default and requires iiSDKCore 0.20 and the sibling iiJson source. Set `-DIIVIRTUALIZER_BUILD_BUILDER_AGENT=OFF` to retain the host runtime's iiSDKCore 0.18 minimum without building or installing this worker.\n"
+      "start_line": 65,
+      "end_line": 65,
+      "raw": "Earlier host-based verification on an Apple Silicon Mac covered Debian 13 ARM64/HVF and Windows Server 2025 Standard Evaluation Core x86_64/TCG. Both guests rebuilt iiSDKCore 0.20, compiled the same Runtime/Concurrent application, passed its CTest, executed it with result 5050, and returned native artifacts. The aggregate evidence and ready-to-copy artifact bundles are under `build/build-layer/verification.json` and `build/build-layer/artifacts/`. Those historical runs preceded the container-only testing policy and do not establish container-based verification.\n"
     },
     {
       "id": "b000042",
       "kind": "blank",
-      "start_line": 63,
-      "end_line": 63,
+      "start_line": 66,
+      "end_line": 66,
       "raw": "\n"
     },
     {
       "id": "b000043",
       "kind": "paragraph",
-      "start_line": 64,
-      "end_line": 64,
-      "raw": "Foreign guests can select a complete kernel command line with `--kernel-args` and an optional headless virtio GPU with `--graphics virtio-gpu`. The default iiOS boot recipe and existing instance manifests remain compatible. See the [Debian and Android boot guide](docs/guest-os-boot.md) for image preparation, actual boot evidence, and guest-agent limits.\n"
+      "start_line": 67,
+      "end_line": 67,
+      "raw": "The native build worker is enabled by default and requires iiSDKCore 0.20 and the sibling iiJson source. Set `-DIIVIRTUALIZER_BUILD_BUILDER_AGENT=OFF` to retain the host runtime's iiSDKCore 0.18 minimum without building or installing this worker.\n"
     },
     {
       "id": "b000044",
       "kind": "blank",
-      "start_line": 65,
-      "end_line": 65,
+      "start_line": 68,
+      "end_line": 68,
       "raw": "\n"
     },
     {
       "id": "b000045",
       "kind": "paragraph",
-      "start_line": 66,
-      "end_line": 66,
-      "raw": "See [the Korean architecture guide](docs/architecture.md) and [the operating guide](docs/usage.md) for guest construction and lifecycle commands. Each runtime owns one host's VM execution; Gateway objects connect remote runtimes through account-authorized SSH requests. Distributed scheduling, billing and VPC control belong in an upper layer.\n"
+      "start_line": 69,
+      "end_line": 69,
+      "raw": "Foreign guests can select a complete kernel command line with `--kernel-args` and an optional headless virtio GPU with `--graphics virtio-gpu`. The default iiOS boot recipe and existing instance manifests remain compatible. See the [Debian and Android boot guide](docs/guest-os-boot.md) for image preparation, actual boot evidence, and guest-agent limits.\n"
     },
     {
       "id": "b000046",
       "kind": "blank",
-      "start_line": 67,
-      "end_line": 67,
+      "start_line": 70,
+      "end_line": 70,
       "raw": "\n"
     },
     {
       "id": "b000047",
       "kind": "paragraph",
-      "start_line": 68,
-      "end_line": 68,
-      "raw": "Earlier host-run ARM64 HVF and TCG boot verification covered iiSDK PID 1, persistent ext4 storage, DHCP/NAT and HTTP forwarding, pause/resume, reboot, and graceful/forced shutdown. The multi-VM test kept one C++ controller and one Runtime alive while two guests served HTTP, verified independent resource allocations and lifecycle operations, and isolated a third guest's deliberate port-conflict failure. See [validation evidence and platform limits](docs/validation.md).\n"
+      "start_line": 71,
+      "end_line": 71,
+      "raw": "See [the Korean architecture guide](docs/architecture.md) and [the operating guide](docs/usage.md) for guest construction and lifecycle commands. Each runtime owns one host's VM execution; Gateway objects connect remote runtimes through account-authorized SSH requests. Distributed scheduling, billing and VPC control belong in an upper layer.\n"
     },
     {
       "id": "b000048",
       "kind": "blank",
-      "start_line": 69,
-      "end_line": 69,
+      "start_line": 72,
+      "end_line": 72,
       "raw": "\n"
     },
     {
       "id": "b000049",
       "kind": "paragraph",
-      "start_line": 70,
-      "end_line": 70,
-      "raw": "Host and guest file creation normally uses iiFileProvider Native, including lock files, boot counters, instance manifests and raw volume staging. An explicit macOS base-disk clone can use the filesystem's copy-on-write operation before falling back to the provider. The Linux guest links the provider statically; cross toolchains must configure both C and C++ compilers. See [file provider contract](docs/FileProvider.md).\n"
+      "start_line": 73,
+      "end_line": 73,
+      "raw": "Earlier host-run ARM64 HVF and TCG boot verification covered iiSDK PID 1, persistent ext4 storage, DHCP/NAT and HTTP forwarding, pause/resume, reboot, and graceful/forced shutdown. The multi-VM test kept one C++ controller and one Runtime alive while two guests served HTTP, verified independent resource allocations and lifecycle operations, and isolated a third guest's deliberate port-conflict failure. See [validation evidence and platform limits](docs/validation.md).\n"
     },
     {
       "id": "b000050",
-      "kind": "blank",
-      "start_line": 71,
-      "end_line": 71,
-      "raw": "\n"
-    },
-    {
-      "id": "b000051",
-      "kind": "html",
-      "start_line": 72,
-      "end_line": 72,
-      "raw": "<!-- workspace-docs:readme:start -->\n"
-    },
-    {
-      "id": "b000052",
-      "kind": "heading",
-      "start_line": 73,
-      "end_line": 73,
-      "raw": "## Documentation entry points\n",
-      "level": 2,
-      "title": "Documentation entry points"
-    },
-    {
-      "id": "b000053",
       "kind": "blank",
       "start_line": 74,
       "end_line": 74,
       "raw": "\n"
     },
     {
-      "id": "b000054",
-      "kind": "list",
+      "id": "b000051",
+      "kind": "paragraph",
       "start_line": 75,
+      "end_line": 75,
+      "raw": "Host and guest file creation normally uses iiFileProvider Native, including lock files, boot counters, instance manifests and raw volume staging. An explicit macOS base-disk clone can use the filesystem's copy-on-write operation before falling back to the provider. The Linux guest links the provider statically; cross toolchains must configure both C and C++ compilers. See [file provider contract](docs/FileProvider.md).\n"
+    },
+    {
+      "id": "b000052",
+      "kind": "blank",
+      "start_line": 76,
+      "end_line": 76,
+      "raw": "\n"
+    },
+    {
+      "id": "b000053",
+      "kind": "html",
+      "start_line": 77,
+      "end_line": 77,
+      "raw": "<!-- workspace-docs:readme:start -->\n"
+    },
+    {
+      "id": "b000054",
+      "kind": "heading",
+      "start_line": 78,
       "end_line": 78,
+      "raw": "## Documentation entry points\n",
+      "level": 2,
+      "title": "Documentation entry points"
+    },
+    {
+      "id": "b000055",
+      "kind": "blank",
+      "start_line": 79,
+      "end_line": 79,
+      "raw": "\n"
+    },
+    {
+      "id": "b000056",
+      "kind": "list",
+      "start_line": 80,
+      "end_line": 83,
       "raw": "- Human overview: this English `README.md`.\n- Agent instructions: [AGENT.md](AGENT.md).\n- Human documentation: [documentation index](docs/README.md).\n- Structured agent documentation: [agent index](docs/agent-index.json).\n",
       "items": [
         {
@@ -433,10 +447,10 @@
       ]
     },
     {
-      "id": "b000055",
+      "id": "b000057",
       "kind": "html",
-      "start_line": 79,
-      "end_line": 79,
+      "start_line": 84,
+      "end_line": 84,
       "raw": "<!-- workspace-docs:readme:end -->\n"
     }
   ],
@@ -450,26 +464,26 @@
       "start_line": 1
     },
     {
-      "block_id": "b000052",
+      "block_id": "b000054",
       "parent_id": "b000001",
       "level": 2,
       "title": "Documentation entry points",
       "anchor": "documentation-entry-points",
-      "start_line": 73
+      "start_line": 78
     }
   ],
   "indexes": {
     "directive_candidates": [
       {
-        "block_id": "b000039",
-        "line": 60,
+        "block_id": "b000041",
+        "line": 65,
         "text": "Earlier host-based verification on an Apple Silicon Mac covered Debian 13 ARM64/HVF and Windows Server 2025 Standard Evaluation Core x86_64/TCG. Both guests rebuilt iiSDKCore 0.20, compiled the same Runtime/Concurrent application, passed its CTest, executed it with result 5050, and returned native artifacts. The aggregate evidence and ready-to-copy artifact bundles are under `build/build-layer/verification.json` and `build/build-layer/artifacts/`. Those historical runs preceded the container-only testing policy and do not establish container-based verification.",
         "basis": "lexical_match",
         "context": "paragraph"
       },
       {
-        "block_id": "b000049",
-        "line": 70,
+        "block_id": "b000051",
+        "line": 75,
         "text": "Host and guest file creation normally uses iiFileProvider Native, including lock files, boot counters, instance manifests and raw volume staging. An explicit macOS base-disk clone can use the filesystem's copy-on-write operation before falling back to the provider. The Linux guest links the provider statically; cross toolchains must configure both C and C++ compilers. See [file provider contract](docs/FileProvider.md).",
         "basis": "lexical_match",
         "context": "paragraph"
@@ -477,7 +491,7 @@
     ],
     "commands": [
       {
-        "block_id": "b000025",
+        "block_id": "b000027",
         "language": "sh",
         "code": "cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release \\\n  -DCMAKE_PREFIX_PATH=\"$HOME/.local/SDK/iiSDKCore;$HOME/.local/SDK/iiJson;$HOME/.local/SDK/iiFileProvider;$HOME/.local/SDK/iiNetwork;$HOME/.local/SDK/iiAccountManager\"\ncmake --build build --parallel 4\nctest --test-dir build --output-on-failure\n"
       }
@@ -512,81 +526,81 @@
         "line": 24
       },
       {
-        "block_id": "b000021",
+        "block_id": "b000023",
         "label": "the platform guest guide",
         "target": "docs/platform-guests.md",
         "kind": "relative",
-        "line": 33
-      },
-      {
-        "block_id": "b000035",
-        "label": "Korean process API guide",
-        "target": "docs/processes-api.md",
-        "kind": "relative",
-        "line": 56
+        "line": 38
       },
       {
         "block_id": "b000037",
+        "label": "Korean process API guide",
+        "target": "docs/processes-api.md",
+        "kind": "relative",
+        "line": 61
+      },
+      {
+        "block_id": "b000039",
         "label": "Korean guest build guide",
         "target": "docs/guest-build.md",
         "kind": "relative",
-        "line": 58
+        "line": 63
       },
       {
-        "block_id": "b000043",
+        "block_id": "b000045",
         "label": "Debian and Android boot guide",
         "target": "docs/guest-os-boot.md",
         "kind": "relative",
-        "line": 64
-      },
-      {
-        "block_id": "b000045",
-        "label": "the Korean architecture guide",
-        "target": "docs/architecture.md",
-        "kind": "relative",
-        "line": 66
-      },
-      {
-        "block_id": "b000045",
-        "label": "the operating guide",
-        "target": "docs/usage.md",
-        "kind": "relative",
-        "line": 66
+        "line": 69
       },
       {
         "block_id": "b000047",
-        "label": "validation evidence and platform limits",
-        "target": "docs/validation.md",
+        "label": "the Korean architecture guide",
+        "target": "docs/architecture.md",
         "kind": "relative",
-        "line": 68
+        "line": 71
+      },
+      {
+        "block_id": "b000047",
+        "label": "the operating guide",
+        "target": "docs/usage.md",
+        "kind": "relative",
+        "line": 71
       },
       {
         "block_id": "b000049",
+        "label": "validation evidence and platform limits",
+        "target": "docs/validation.md",
+        "kind": "relative",
+        "line": 73
+      },
+      {
+        "block_id": "b000051",
         "label": "file provider contract",
         "target": "docs/FileProvider.md",
         "kind": "relative",
-        "line": 70
+        "line": 75
       },
       {
-        "block_id": "b000054",
+        "block_id": "b000056",
         "label": "AGENT.md",
         "target": "AGENT.md",
         "kind": "relative",
-        "line": 76
+        "line": 81
       },
       {
-        "block_id": "b000054",
+        "block_id": "b000056",
         "label": "documentation index",
         "target": "docs/README.md",
         "kind": "relative",
-        "line": 77
+        "line": 82
       },
       {
-        "block_id": "b000054",
+        "block_id": "b000056",
         "label": "agent index",
         "target": "docs/agent-index.json",
         "kind": "relative",
-        "line": 78
+        "line": 83
       }
     ],
     "tables": []

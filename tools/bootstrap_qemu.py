@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the optional external QEMU engine entirely beneath build/."""
+"""Build the optional external QEMU engine beneath project resources/."""
 import argparse
 import hashlib
 import json
@@ -11,6 +11,7 @@ import subprocess
 import sys
 import tarfile
 import urllib.request
+from resource_paths import dependency_root, resource_path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -47,10 +48,10 @@ def main():
     parser.add_argument('--without-network', action='store_true')
     parser.add_argument('--with-display', action='store_true', help='Enable pixman/VNC diagnostics in a separate engine build')
     parser.add_argument('--with-tpm', action='store_true', help='Enable QEMU TPM device and emulator support')
-    parser.add_argument('--output', type=Path, help='Optional build directory beneath this project build/')
+    parser.add_argument('--output', type=Path, help='Optional build directory beneath resources/dependencies/')
     parser.add_argument('--targets', nargs='+', choices=['aarch64','x86_64'], default=['aarch64','x86_64'])
     args = parser.parse_args()
-    base = ROOT / 'build' / 'dependencies'
+    base = dependency_root(ROOT)
     base.mkdir(parents=True, exist_ok=True)
     specs = json.loads((ROOT / 'tools' / 'sources.json').read_text())
     qemu = fetch(specs['qemu'], base)
@@ -75,9 +76,9 @@ def main():
                  '-Ddefault_library=static'], env=env)
         run(['ninja', '-C', slirp_build, '-j', args.jobs, 'install'], env=env)
     env['PKG_CONFIG_PATH'] = str(prefix / 'lib' / 'pkgconfig') + os.pathsep + env.get('PKG_CONFIG_PATH', '')
-    qemu_build = args.output.resolve() if args.output else qemu / 'build'
-    if ROOT / 'build' not in qemu_build.parents:
-        raise ValueError('QEMU build output must stay beneath this project build/')
+    qemu_build = resource_path(ROOT, args.output) if args.output else qemu / 'build'
+    if not qemu_build.is_relative_to(base) or qemu_build == base:
+        raise ValueError('QEMU build output must stay beneath resources/dependencies/')
     qemu_build.mkdir(parents=True, exist_ok=True)
     if (args.with_display or args.with_tpm) and (qemu_build / 'build.ninja').exists():
         config=(qemu_build/'config-host.h').read_text()

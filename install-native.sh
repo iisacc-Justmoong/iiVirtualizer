@@ -1,7 +1,14 @@
 #!/bin/sh
 set -eu
 root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-prefix=${1:-"$root/build/install"}
+if [ "$#" -gt 0 ]; then
+    prefix=$1
+elif [ -n "${HOME:-}" ]; then
+    prefix="$HOME/.local/SDK/iiVirtualizer"
+else
+    printf '%s\n' 'Pass an installation prefix when HOME is unavailable.' >&2
+    exit 2
+fi
 gateway_openssl_root=${OPENSSL_ROOT_DIR:-}
 if [ -z "$gateway_openssl_root" ] && command -v brew >/dev/null 2>&1; then
     gateway_openssl_root=$(brew --prefix openssl@4 2>/dev/null || brew --prefix openssl@3 2>/dev/null || true)

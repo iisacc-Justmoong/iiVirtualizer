@@ -10,8 +10,8 @@
   },
   "source": {
     "path": "docs/filesystem.md",
-    "sha256": "4315049d5c76c6283b74dc3f50b80d70c1bc7a60048c6574e3e7b08a1075c22a",
-    "bytes": 7655,
+    "sha256": "ee69dc9e460cb30eb3e8dcfd5aca06d03b01a60b257091b7aa3b4ef3ae152c99",
+    "bytes": 7659,
     "line_count": 41,
     "encoding": "utf-8",
     "language": "ko"
@@ -201,9 +201,9 @@
       "kind": "fenced_code",
       "start_line": 25,
       "end_line": 27,
-      "raw": "```sh\npython3 -B tools/upgrade_guest.py VM_ID --image build/images/aarch64\n```\n",
+      "raw": "```sh\npython3 -B tools/upgrade_guest.py VM_ID --image resources/images/aarch64\n```\n",
       "language": "sh",
-      "code": "python3 -B tools/upgrade_guest.py VM_ID --image build/images/aarch64\n",
+      "code": "python3 -B tools/upgrade_guest.py VM_ID --image resources/images/aarch64\n",
       "closed": true
     },
     {
@@ -418,7 +418,7 @@
       {
         "block_id": "b000025",
         "language": "sh",
-        "code": "python3 -B tools/upgrade_guest.py VM_ID --image build/images/aarch64\n"
+        "code": "python3 -B tools/upgrade_guest.py VM_ID --image resources/images/aarch64\n"
       }
     ],
     "links": [

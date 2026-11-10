@@ -1,5 +1,6 @@
 #include <iiVirtualizer/Runtime.h>
 #include <iiVirtualizer/Qemu.h>
+#include "Main.h"
 #include "../Runtime/Store.h"
 #include <iiSDKCore/Process/Process.h>
 #include <charconv>
@@ -51,7 +52,7 @@ int main(int argc,char** argv) {
         if(command=="--version") {std::cout<<IIVIRTUALIZER_VERSION<<'\n';return 0;}
         const std::set<std::string> commands{"doctor","create","list","describe","start","pause","resume","stop","remove","guest-info","wait-ready","console","plan","start-many","describe-many","pause-many","resume-many","stop-many"};
         if(!commands.contains(command))throw std::invalid_argument("Unknown command: "+command);
-        v::fs::path root="build/instances";v::QemuOptions engine;
+        v::fs::path root=ii::virtualizer::cli::default_instance_root;v::QemuOptions engine;
         v::RuntimeOptions runtime_options;std::vector<std::string> ids;const bool many=command.ends_with("-many");
         v::InstanceSpec spec;spec.architecture=v::host_architecture();
         bool force=false;std::uint64_t timeout=command=="wait-ready"?30:10;

@@ -10,8 +10,8 @@
   },
   "source": {
     "path": "docs/usage.md",
-    "sha256": "0c8f847f6dddb5204d47b6f250069fe14da42769e0811e1d418dea91cc179491",
-    "bytes": 12089,
+    "sha256": "021f1197cf20936285335355e1b82038b365533ca650f164a2e4c2840317ab4c",
+    "bytes": 12032,
     "line_count": 102,
     "encoding": "utf-8",
     "language": "ko"
@@ -76,7 +76,7 @@
       "kind": "paragraph",
       "start_line": 13,
       "end_line": 13,
-      "raw": "QEMU는 별도 실행 프로세스이며 iiVirtualizer에 링크하지 않는다. 부트스트랩은 SHA-256으로 고정한 QEMU·libslirp 소스를 `build/dependencies/`에 내려받아 빌드한다. macOS에서는 Homebrew의 glib·pixman·pkg-config와 Xcode 도구를 사용할 수 있다. 설치본이 있으면 아래 명령의 `--qemu-aarch64`에 해당 실행 파일을 지정한다.\n"
+      "raw": "QEMU는 별도 실행 프로세스이며 iiVirtualizer에 링크하지 않는다. 부트스트랩은 SHA-256으로 고정한 QEMU·libslirp 소스를 `resources/dependencies/`에 내려받아 빌드한다. macOS에서는 Homebrew의 glib·pixman·pkg-config와 Xcode 도구를 사용할 수 있다. 설치본이 있으면 아래 명령의 `--qemu-aarch64`에 해당 실행 파일을 지정한다.\n"
     },
     {
       "id": "b000008",
@@ -211,7 +211,7 @@
       "kind": "paragraph",
       "start_line": 41,
       "end_line": 41,
-      "raw": "이전 동시 부팅 검증은 C++ 제어 프로세스 하나가 Runtime 객체 하나를 유지한 상태에서 Linux VM 두 개를 병렬 기동했다. 각 서비스에 접속하고, 한 VM의 일시정지·종료 중에도 다른 VM의 응답을 확인했다. 포트 충돌로 실패하는 세 번째 VM과 첫 VM의 재기동을 같은 일괄 작업에 넣어 실패 분리와 서로 다른 부팅 횟수를 확인했다. 결과는 `build/multi-verification/`에 보관한다. 기존 `tests/multi_boot.py`는 VM 상태를 `build/`에 두므로 `resources/`로 옮기기 전에는 새 시험에 사용하지 않는다. 실제 VM 시험은 전용 Linux 컨테이너의 TCG에서만 수행한다.\n"
+      "raw": "이전 동시 부팅 검증은 C++ 제어 프로세스 하나가 Runtime 객체 하나를 유지한 상태에서 Linux VM 두 개를 병렬 기동했다. 각 서비스에 접속하고, 한 VM의 일시정지·종료 중에도 다른 VM의 응답을 확인했다. 포트 충돌로 실패하는 세 번째 VM과 첫 VM의 재기동을 같은 일괄 작업에 넣어 실패 분리와 서로 다른 부팅 횟수를 확인했다. 결과는 `build/multi-verification/`에 보관한다. 현재 `tests/multi_boot.py`는 VM 상태와 검증 결과를 `resources/.state/`에 둔다. 실제 VM 시험은 전용 Linux 컨테이너의 TCG에서만 수행한다.\n"
     },
     {
       "id": "b000026",
@@ -298,7 +298,7 @@
       "kind": "paragraph",
       "start_line": 64,
       "end_line": 64,
-      "raw": "다음 시험 예도 iiOS 이미지와 QEMU가 준비된 전용 Linux 컨테이너의 프로젝트 루트에서 실행한다. 기존 CLI 기본 상태 저장소는 `build/instances`이므로 시험에서는 반드시 `--root`로 `resources/` 아래의 전용 경로를 지정한다. AF_UNIX 경로 제한 때문에 상태 저장소 경로는 짧게 유지한다.\n"
+      "raw": "다음 시험 예도 iiOS 이미지와 QEMU가 준비된 전용 Linux 컨테이너의 프로젝트 루트에서 실행한다. CLI 기본 상태 저장소는 `resources/vm`이며 시험에서는 반드시 `--root`로 `resources/` 아래의 전용 경로를 지정한다. AF_UNIX 경로 제한 때문에 상태 저장소 경로는 짧게 유지한다.\n"
     },
     {
       "id": "b000038",
@@ -529,7 +529,7 @@
       {
         "block_id": "b000007",
         "line": 13,
-        "text": "QEMU는 별도 실행 프로세스이며 iiVirtualizer에 링크하지 않는다. 부트스트랩은 SHA-256으로 고정한 QEMU·libslirp 소스를 `build/dependencies/`에 내려받아 빌드한다. macOS에서는 Homebrew의 glib·pixman·pkg-config와 Xcode 도구를 사용할 수 있다. 설치본이 있으면 아래 명령의 `--qemu-aarch64`에 해당 실행 파일을 지정한다.",
+        "text": "QEMU는 별도 실행 프로세스이며 iiVirtualizer에 링크하지 않는다. 부트스트랩은 SHA-256으로 고정한 QEMU·libslirp 소스를 `resources/dependencies/`에 내려받아 빌드한다. macOS에서는 Homebrew의 glib·pixman·pkg-config와 Xcode 도구를 사용할 수 있다. 설치본이 있으면 아래 명령의 `--qemu-aarch64`에 해당 실행 파일을 지정한다.",
         "basis": "lexical_match",
         "context": "paragraph"
       },
@@ -544,13 +544,6 @@
         "block_id": "b000019",
         "line": 35,
         "text": "이미지 작성기는 고정된 Alpine Linux 3.22.7의 Linux 6.12.114 커널, 초기 드라이버, musl·BusyBox·파일시스템 도구를 바탕으로 자체 `/init`을 패키징한다. EFI zboot를 풀 때 `zstd` 실행기가 필요할 수 있다. `image.json`에 커널·PID 1·launcher·워크로드·initramfs 해시와 배포물 출처·파일시스템 프로파일이 기록된다. 워크로드가 있으면 `ii-workload`도 필요하며 기본적으로 `ii-init`과 같은 빌드 디렉터리에서 찾는다. 패키지 SHA-256은 최초 HTTPS 취득 결과로 고정한 값이며 APK 서명 검증을 대신한다고 주장하지 않는다.",
-        "basis": "lexical_match",
-        "context": "paragraph"
-      },
-      {
-        "block_id": "b000025",
-        "line": 41,
-        "text": "이전 동시 부팅 검증은 C++ 제어 프로세스 하나가 Runtime 객체 하나를 유지한 상태에서 Linux VM 두 개를 병렬 기동했다. 각 서비스에 접속하고, 한 VM의 일시정지·종료 중에도 다른 VM의 응답을 확인했다. 포트 충돌로 실패하는 세 번째 VM과 첫 VM의 재기동을 같은 일괄 작업에 넣어 실패 분리와 서로 다른 부팅 횟수를 확인했다. 결과는 `build/multi-verification/`에 보관한다. 기존 `tests/multi_boot.py`는 VM 상태를 `build/`에 두므로 `resources/`로 옮기기 전에는 새 시험에 사용하지 않는다. 실제 VM 시험은 전용 Linux 컨테이너의 TCG에서만 수행한다.",
         "basis": "lexical_match",
         "context": "paragraph"
       },
@@ -571,7 +564,7 @@
       {
         "block_id": "b000037",
         "line": 64,
-        "text": "다음 시험 예도 iiOS 이미지와 QEMU가 준비된 전용 Linux 컨테이너의 프로젝트 루트에서 실행한다. 기존 CLI 기본 상태 저장소는 `build/instances`이므로 시험에서는 반드시 `--root`로 `resources/` 아래의 전용 경로를 지정한다. AF_UNIX 경로 제한 때문에 상태 저장소 경로는 짧게 유지한다.",
+        "text": "다음 시험 예도 iiOS 이미지와 QEMU가 준비된 전용 Linux 컨테이너의 프로젝트 루트에서 실행한다. CLI 기본 상태 저장소는 `resources/vm`이며 시험에서는 반드시 `--root`로 `resources/` 아래의 전용 경로를 지정한다. AF_UNIX 경로 제한 때문에 상태 저장소 경로는 짧게 유지한다.",
         "basis": "lexical_match",
         "context": "paragraph"
       },

@@ -13,6 +13,7 @@ import stat
 import subprocess
 import sys
 import uuid
+from resource_paths import image_root, instance_root, resource_path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -30,12 +31,12 @@ def direct(path, directory=False):
         raise ValueError('Guest upgrade paths must be direct canonical entries')
 
 
-def upgrade(identity, image, state, runtime):
+def upgrade(identity, image, state, runtime, *, backup_root=None):
     if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,31}', identity):
         raise ValueError('Invalid instance ID')
     state, image, runtime = [Path(os.path.abspath(value)) for value in (state, image, runtime)]
-    if not state.is_relative_to(ROOT / 'build'):
-        raise ValueError('Upgrade instance state must remain inside this project build/')
+    if resource_path(ROOT, state) != state:
+        raise ValueError('Upgrade instance state must be a direct resource path')
     direct(state, True);direct(image, True)
     directory = state / identity;direct(directory, True)
     for path in [directory / 'instance.json', directory / 'kernel', directory / 'initramfs', directory / 'data.raw', image / 'image.json', image / 'Image', image / 'initramfs.cpio.gz']:
@@ -70,7 +71,8 @@ def upgrade(identity, image, state, runtime):
         if old_hash == new_hash:
             return result
         token = datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S') + '-' + identity + '-' + uuid.uuid4().hex[:6]
-        backup = ROOT / 'build/guest-upgrades' / token
+        backups = resource_path(ROOT, backup_root or ROOT / 'resources/guest-upgrades')
+        backup = backups / token
         backup.mkdir(parents=True, mode=0o700)
         shutil.copyfile(directory / 'initramfs', backup / 'initramfs.before')
         shutil.copyfile(directory / 'instance.json', backup / 'instance.before.json')
@@ -100,8 +102,8 @@ def upgrade(identity, image, state, runtime):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('instance')
-    parser.add_argument('--image', type=Path, default=ROOT / 'build/images/aarch64')
-    parser.add_argument('--root', type=Path, default=ROOT / 'build/instances')
+    parser.add_argument('--image', type=Path, default=image_root(ROOT) / 'aarch64')
+    parser.add_argument('--root', type=Path, default=instance_root(ROOT))
     parser.add_argument('--runtime', type=Path, default=ROOT / 'build/iivirtualizer')
     args = parser.parse_args()
     try:

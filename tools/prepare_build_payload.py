@@ -69,12 +69,12 @@ exit /b 0
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output',type=Path,default=ROOT/'build/build-layer/payload')
-    parser.add_argument('--agent',type=Path,default=ROOT/'build/build-layer/windows-bootstrap/build/iiv-build-agent.exe')
+    parser.add_argument('--output',type=Path,default=ROOT/'resources/build-layer/payload')
+    parser.add_argument('--agent',type=Path,default=ROOT/'resources/build-layer/windows-bootstrap/build/iiv-build-agent.exe')
     parser.add_argument('--sources-only',action='store_true')
     parser.add_argument('--source-snapshot',type=Path)
     args=parser.parse_args();output=generated_path(args.output)
-    if output.exists():raise ValueError('Choose a fresh directory beneath build/ or resources/')
+    if output.exists():raise ValueError('Choose a fresh directory beneath resources/')
     output.mkdir(parents=True);windows=output/'windows';payload=windows/'Payload';source=payload/'source';source.mkdir(parents=True)
     print('Snapshotting SDK source files',flush=True)
     inventory={}
@@ -123,14 +123,14 @@ def main():
     if args.sources_only:
         print(json.dumps({'payload':str(output),'source':str(source),'job':linux_job['job']},indent=2));return
     print('Unpacking pinned Windows tools',flush=True)
-    downloads=ROOT/'build/build-layer/downloads';tools=payload/'tools';tools.mkdir()
+    downloads=ROOT/'resources/build-layer/downloads';tools=payload/'tools';tools.mkdir()
     extract_zip(downloads/'llvm-mingw-20260922-ucrt-x86_64.zip',tools,'e3ad77d117a4bea19a7a3b333341824d79a5a371004a10e25b8504e7b3047666')
     (tools/'llvm-mingw-20260922-ucrt-x86_64').rename(tools/'clang')
     extract_zip(downloads/'cmake-3.31.8-windows-x86_64.zip',tools,'81aa9964dbabd71fe02e7ec50472fd3ad56138c49944515ece9001efbff8d719')
     (tools/'cmake-3.31.8-windows-x86_64').rename(tools/'cmake')
     extract_zip(downloads/'ninja-win.zip',tools,'f550fec705b6d6ff58f2db3c374c2277a37691678d6aba463adcbb129108467a')
     agent=payload/'agent';agent.mkdir();shutil.copy2(args.agent,agent/'iiv-build-agent.exe')
-    bootstrap=ROOT/'build/build-layer/windows-core/install/bin'
+    bootstrap=ROOT/'resources/build-layer/windows-core/install/bin'
     for dll in bootstrap.glob('*.dll'):shutil.copy2(dll,agent/dll.name)
     for name in ['libc++.dll','libunwind.dll','libwinpthread-1.dll']:
         original=tools/'clang/bin'/name

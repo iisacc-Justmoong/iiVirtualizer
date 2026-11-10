@@ -5,11 +5,11 @@ from pathlib import Path
 import platform
 import subprocess
 import sys
-import time
 
 exe=Path(sys.argv[1]).resolve()
-root=Path(sys.argv[2]).resolve()/str(time.time_ns())[-8:]
-root.mkdir(parents=True)
+root=Path(sys.argv[2]).resolve()
+root.mkdir(parents=True,exist_ok=True)
+if any(root.iterdir()):raise ValueError('Build guest test needs an empty owned workspace')
 fixture=root/'fixture';fixture.write_bytes(b'fixture')
 def run(command,identifier,*args,ok=True):
     p=subprocess.run([str(exe),command,identifier,'--root',str(root/'state'),*map(str,args)],

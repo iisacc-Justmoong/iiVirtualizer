@@ -10,7 +10,7 @@ ctest --test-dir build --output-on-failure
 python3 tools/bootstrap_qemu.py
 ```
 
-QEMU는 별도 실행 프로세스이며 iiVirtualizer에 링크하지 않는다. 부트스트랩은 SHA-256으로 고정한 QEMU·libslirp 소스를 `build/dependencies/`에 내려받아 빌드한다. macOS에서는 Homebrew의 glib·pixman·pkg-config와 Xcode 도구를 사용할 수 있다. 설치본이 있으면 아래 명령의 `--qemu-aarch64`에 해당 실행 파일을 지정한다.
+QEMU는 별도 실행 프로세스이며 iiVirtualizer에 링크하지 않는다. 부트스트랩은 SHA-256으로 고정한 QEMU·libslirp 소스를 `resources/dependencies/`에 내려받아 빌드한다. macOS에서는 Homebrew의 glib·pixman·pkg-config와 Xcode 도구를 사용할 수 있다. 설치본이 있으면 아래 명령의 `--qemu-aarch64`에 해당 실행 파일을 지정한다.
 
 ## Linux 게스트 빌드
 
@@ -38,7 +38,7 @@ python3 tools/prepare_guest.py --init build/guest/build/ii-init \
 
 ### 하나의 런타임에서 여러 VM 제어
 
-이전 동시 부팅 검증은 C++ 제어 프로세스 하나가 Runtime 객체 하나를 유지한 상태에서 Linux VM 두 개를 병렬 기동했다. 각 서비스에 접속하고, 한 VM의 일시정지·종료 중에도 다른 VM의 응답을 확인했다. 포트 충돌로 실패하는 세 번째 VM과 첫 VM의 재기동을 같은 일괄 작업에 넣어 실패 분리와 서로 다른 부팅 횟수를 확인했다. 결과는 `build/multi-verification/`에 보관한다. 기존 `tests/multi_boot.py`는 VM 상태를 `build/`에 두므로 `resources/`로 옮기기 전에는 새 시험에 사용하지 않는다. 실제 VM 시험은 전용 Linux 컨테이너의 TCG에서만 수행한다.
+이전 동시 부팅 검증은 C++ 제어 프로세스 하나가 Runtime 객체 하나를 유지한 상태에서 Linux VM 두 개를 병렬 기동했다. 각 서비스에 접속하고, 한 VM의 일시정지·종료 중에도 다른 VM의 응답을 확인했다. 포트 충돌로 실패하는 세 번째 VM과 첫 VM의 재기동을 같은 일괄 작업에 넣어 실패 분리와 서로 다른 부팅 횟수를 확인했다. 결과는 `build/multi-verification/`에 보관한다. 현재 `tests/multi_boot.py`는 VM 상태와 검증 결과를 `resources/.state/`에 둔다. 실제 VM 시험은 전용 Linux 컨테이너의 TCG에서만 수행한다.
 
 `create`로 서로 다른 ID를 생성한 다음 `start-many vm-a vm-b --workers 4`로 같은 런타임에서 병렬 기동한다. 각 VM은 개별 QEMU 프로세스로 실행되며 CPU·메모리·디스크·UUID·제어 소켓·콘솔을 공유하지 않는다. 두 VM의 게스트 포트가 같아도 호스트 전달 포트는 다르게 지정해야 한다. 다음 예는 시험용 iiOS 이미지가 준비된 전용 Linux 컨테이너 안에서 실행한다.
 
@@ -61,7 +61,7 @@ build/iivirtualizer stop-many vm-a vm-b --root "$IIV_EXAMPLE_ROOT"
 
 같은 VM에 작업이 겹치면 스레드·프로세스 사이에서 `busy`를 반환한다. 다른 VM의 긴 기동·종료가 저장소 전체를 잠그지 않는다. 실행기 worker 수는 제어 작업의 병렬도이며 실행 중인 VM 개수의 상한이 아니다. 주입 백엔드는 서로 다른 VM의 동시 호출을 지원해야 한다.
 
-다음 시험 예도 iiOS 이미지와 QEMU가 준비된 전용 Linux 컨테이너의 프로젝트 루트에서 실행한다. 기존 CLI 기본 상태 저장소는 `build/instances`이므로 시험에서는 반드시 `--root`로 `resources/` 아래의 전용 경로를 지정한다. AF_UNIX 경로 제한 때문에 상태 저장소 경로는 짧게 유지한다.
+다음 시험 예도 iiOS 이미지와 QEMU가 준비된 전용 Linux 컨테이너의 프로젝트 루트에서 실행한다. CLI 기본 상태 저장소는 `resources/vm`이며 시험에서는 반드시 `--root`로 `resources/` 아래의 전용 경로를 지정한다. AF_UNIX 경로 제한 때문에 상태 저장소 경로는 짧게 유지한다.
 
 ```sh
 export IIV_EXAMPLE_ROOT="$PWD/resources/platform-guests/example-vms"

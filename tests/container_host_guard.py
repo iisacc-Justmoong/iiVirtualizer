@@ -5,10 +5,20 @@ from pathlib import Path
 import signal
 import subprocess
 import sys
+import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
-from container_host_guard import emergency_memory, signal_own_start, validate_min_free_percent
+from container_host_guard import checked_start_log, emergency_memory, signal_own_start, validate_min_free_percent
+
+assert checked_start_log(ROOT / 'resources/.state' / ('guard-' + uuid.uuid4().hex[:8]) / 'start.log').is_relative_to(ROOT / 'resources')
+for invalid in (ROOT / 'build/guard-test.log', ROOT / 'resources/platform-guests'):
+    try:
+        checked_start_log(invalid)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('Unsafe host log path was accepted')
 
 assert emergency_memory([40, 22], 0)
 assert emergency_memory([24], 0)

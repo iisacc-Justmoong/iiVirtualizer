@@ -10,9 +10,20 @@ import sys
 import time
 
 from vm_test_watchdog import memory_percent, swapout_bytes
+from resource_paths import resource_path
 
 ROOT = Path(__file__).resolve().parents[1]
 MIN_FREE_PERCENT = 25
+
+
+def checked_start_log(path):
+    path = Path(path)
+    if path.is_symlink():
+        raise ValueError('Start log must not be a symlink')
+    log = resource_path(ROOT, path)
+    if log.exists():
+        raise ValueError('Choose a fresh start log beneath resources/')
+    return log
 
 
 def validate_min_free_percent(value):
@@ -58,9 +69,7 @@ def main():
     tmpdir = (resources / 'platform-guests/container-runtime/tmp').resolve(strict=True)
     if instance.parent != lima_home or not lima.is_file() or not tmpdir.is_dir():
         raise ValueError('The dedicated host resources are not available')
-    log = args.start_log.resolve(strict=False)
-    if (ROOT / 'build').resolve(strict=True) not in log.parents or log.exists():
-        raise ValueError('Choose a fresh start log beneath build/')
+    log = checked_start_log(args.start_log)
     initial_free, previous_swap = sample_host()
     if initial_free < args.min_free_percent:
         raise RuntimeError('Host memory is below the startup threshold')

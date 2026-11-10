@@ -25,6 +25,11 @@ Guest workloads use the mandatory **society-v1** filesystem profile. Writable wo
 
 The initial host adapter supports macOS/HVF and Linux/KVM, plus explicit QEMU/TCG emulation. Hardware acceleration requires matching host and guest architectures. The supplied image recipe builds an aarch64 guest named **iiOS**. The API also describes x86_64 guests when a compatible kernel and initramfs are supplied.
 
+The multi-VM test controller obtains its host process ID using the native
+Windows or POSIX interface, so its test source does not require POSIX
+`getpid()` on Windows. This source adjustment does not implement or validate a
+Windows persistent host backend; that backend still reports unsupported.
+
 Disk boot also supports ARM64 UEFI code with instance-owned variable storage,
 USB installation media, NVMe storage and a RAM framebuffer. Debian cloud-image
 preparation and boot probes select the matching ARM64 or x86-64 serial console.
@@ -45,11 +50,11 @@ cmake --build build --parallel 4
 ctest --test-dir build --output-on-failure
 ```
 
-Build the optional external QEMU engine locally with `python3 tools/bootstrap_qemu.py`. Dependency builds and validation outputs belong under `build/`; reusable guest images, firmware and VM state belong under `resources/`. An existing QEMU can be selected with `--qemu-aarch64` or `--qemu-x86_64`.
+Build the optional external QEMU engine locally with `python3 tools/bootstrap_qemu.py`. The module and test binaries use `build/`. Guest images, VM state, external engine sources and verification data live under `resources/`; examples are enabled explicitly with `-DIIVIRTUALIZER_BUILD_EXAMPLE=ON`. An existing QEMU can be selected with `--qemu-aarch64` or `--qemu-x86_64`.
 
 Guest construction and the workspace contract tests reuse the native `DirectoryStorage` implementation from the sibling iiSocietyContainer source tree; `IISOCIETYCONTAINER_SOURCE` can select another checkout. Cross-compiling the guest requires both C and C++ compilers targeting the same Linux sysroot.
 
-The installed CMake package exports `iiVirtualizer::iiVirtualizer`. Run `./install-native.sh` to stage it under `build/install`. iiSDKCore, iiJson and iiFileProviderNative remain explicit package dependencies; QEMU is selected at runtime. `tests/consumer` verifies consumption through the installed package.
+The installed CMake package exports `iiVirtualizer::iiVirtualizer`. Run `./install-native.sh` to install it under `~/.local/SDK/iiVirtualizer`, or pass an explicit installation prefix. iiSDKCore, iiJson and iiFileProviderNative remain explicit package dependencies; QEMU is selected at runtime. `tests/consumer` verifies consumption through the installed package.
 
 Gateway builds additionally use iiNetwork, iiAccountManagerNative and OpenSSL 3 or later. Set `OPENSSL_ROOT_DIR` for a keg-only installation. `-DIIVIRTUALIZER_BUILD_GATEWAY=OFF` excludes the gateway API and executable.
 

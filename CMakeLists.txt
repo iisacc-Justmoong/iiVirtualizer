@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.31)
 project(iiVirtualizer VERSION 0.6.0 LANGUAGES CXX)
+include(./cmake/ModuleImports.cmake)
 set(CMAKE_CXX_EXTENSIONS OFF)
 include(cmake/InstallPrefix.cmake)
 iiv_set_install_prefix()

@@ -1,0 +1,12 @@
+#pragma once
+
+// C++ public entry for iiVirtualizer; the linked components select the API.
+#include <iiVirtualizer/Types.h>
+#include <iiVirtualizer/Runtime.h>
+#include <iiVirtualizer/Qemu.h>
+#include <iiVirtualizer/GuestProtocol.h>
+#include <iiVirtualizer/Files.h>
+#include <iiVirtualizer/Processes.h>
+#include <iiVirtualizer/Gateway.h>
+#include <iiVirtualizer/GatewayAgent.h>
+#include <iiVirtualizer/VmClient.h>

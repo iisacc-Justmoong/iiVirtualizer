@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.31)
 project(iiVirtualizer VERSION 0.6.0 LANGUAGES CXX)
+set(iiVirtualizer_SPDX_LICENSE "Apache-2.0")
 set(CMAKE_CXX_EXTENSIONS OFF)
 include(cmake/InstallPrefix.cmake)
 iiv_set_install_prefix()
@@ -92,6 +93,8 @@ if(BUILD_TESTING)
     add_test(NAME iiVirtualizer.SourceLayout COMMAND ${CMAKE_COMMAND}
         "-DSOURCE_ROOT=${CMAKE_CURRENT_SOURCE_DIR}" -P "${CMAKE_CURRENT_SOURCE_DIR}/tests/source_layout.cmake")
     find_package(Python3 3.9 REQUIRED COMPONENTS Interpreter)
+    add_test(NAME iiVirtualizer.License COMMAND "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/license_text.py")
     set(_iiv_test_workspace "${Python3_EXECUTABLE}" -B "${CMAKE_CURRENT_SOURCE_DIR}/tests/workspace_runner.py"
         "${iiFileProviderNative_PYTHON_DIRECTORY}" "${CMAKE_CURRENT_SOURCE_DIR}/resources")
     function(iiv_resource_test name)
@@ -231,4 +234,5 @@ configure_package_config_file(cmake/iiVirtualizerConfig.cmake.in "${CMAKE_CURREN
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/iiVirtualizerConfigVersion.cmake" VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/iiVirtualizerConfig.cmake" "${CMAKE_CURRENT_BINARY_DIR}/iiVirtualizerConfigVersion.cmake" DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/iiVirtualizer)
 install(FILES README.md DESTINATION ${CMAKE_INSTALL_DATADIR}/iiVirtualizer)
+install(FILES LICENSE NOTICE DESTINATION ${CMAKE_INSTALL_DATADIR}/iiVirtualizer)
 install(DIRECTORY docs/ DESTINATION ${CMAKE_INSTALL_DATADIR}/iiVirtualizer/docs)

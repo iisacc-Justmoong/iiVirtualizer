@@ -74,6 +74,22 @@ Earlier host-run ARM64 HVF and TCG boot verification covered iiSDK PID 1, persis
 
 Host and guest file creation normally uses iiFileProvider Native, including lock files, boot counters, instance manifests and raw volume staging. An explicit macOS base-disk clone can use the filesystem's copy-on-write operation before falling back to the provider. The Linux guest links the provider statically; cross toolchains must configure both C and C++ compilers. See [file provider contract](docs/FileProvider.md).
 
+## License
+
+SPDX-License-Identifier: Apache-2.0
+
+iiVirtualizer is an iiSDK module licensed under the
+[Apache License, Version 2.0](LICENSE) (SPDX `Apache-2.0`).
+The copyright notice is `Copyright (c) 2026 iisacc`. Attribution for this
+distribution is in [NOTICE](NOTICE). The Korean statement of the same policy
+is [docs/License.md](docs/License.md).
+
+iisacc products are licensed under the GNU Affero General Public License,
+version 3 or later (AGPL-3.0-or-later).
+
+Third-party and vendored code, libraries, fonts, tools, and model weights
+keep their original licenses.
+
 <!-- workspace-docs:readme:start -->
 ## Documentation entry points
 

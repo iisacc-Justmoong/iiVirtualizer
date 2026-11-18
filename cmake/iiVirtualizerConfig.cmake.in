@@ -1,4 +1,5 @@
 @PACKAGE_INIT@
+set(iiVirtualizer_SPDX_LICENSE "Apache-2.0")
 include(CMakeFindDependencyMacro)
 find_dependency(iiSDKCore 0.18 CONFIG COMPONENTS Runtime)
 find_dependency(iiJson 0.1 CONFIG)

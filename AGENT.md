@@ -14,6 +14,14 @@ VM 프로세스는 PID 1의 단일 소유 감독기와 iiSDK Process·비차단 
 
 앱 환경변수를 권한 있는 실행 보조 프로그램에 직접 전달하지 않는다. 내부 payload에 담아 검증하고 격리·권한 제거 후에만 앱 환경으로 적용한다. 보조 프로그램의 libc 시작에 사용자 loader·allocator·locale 환경이 관여하는 경로를 추가하지 않는다.
 
+## 라이선스
+
+이 iiSDK 모듈은 Apache License 2.0이다. 자사 소스, 문서, 도구, 테스트가 포함된다. 저작권 표시는 `Copyright (c) 2026 iisacc`이고 고지는 루트 `NOTICE`에 있다. 사람용 한국어 설명은 [docs/License.md](docs/License.md)이다.
+
+iisacc 제품은 GNU Affero General Public License 3.0 이후(AGPL-3.0-or-later)이다.
+
+제3자와 벤더 코드는 원래 라이선스를 유지한다. 문서 재편 중에도 그 라이선스와 외부 원본은 보존한다.
+
 <!-- workspace-docs:agent:start -->
 ## 문서 구조와 에이전트 탐색
 

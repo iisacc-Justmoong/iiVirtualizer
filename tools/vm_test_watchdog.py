@@ -14,6 +14,7 @@ import time
 from test_isolation import require_test_container
 
 SCRIPTS = {
+    'build': '/work/iiVirtualizer/tools/guest_build.py',
     'linux': '/work/iiVirtualizer/tests/os_boot.py',
     'x86': '/work/iiVirtualizer/tests/windows_x86_boot.py',
     'arm': '/work/iiVirtualizer/tests/windows_arm_boot.py',

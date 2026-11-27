@@ -50,6 +50,10 @@ linux_script = '/work/iiVirtualizer/tests/os_boot.py'
 assert SCRIPTS['linux'] == linux_script
 assert matches_command(cmd(arguments=('-B', linux_script, '--id', 'test-vm')), linux_script, 'test-vm')
 assert not matches_command(cmd(arguments=('-B', linux_script, '--id', 'test-vm')), script, 'test-vm')
+build_script = '/work/iiVirtualizer/tools/guest_build.py'
+assert SCRIPTS['build'] == build_script
+assert matches_command(cmd(arguments=('-B', build_script, '--id', 'test-vm')), build_script, 'test-vm')
+assert not matches_command(cmd(arguments=('-B', build_script, '--id', 'other')), build_script, 'test-vm')
 with tempfile.TemporaryDirectory(dir=ROOT / 'resources') as temp:
     proc = Path(temp)
     for pid, raw in [('101', cmd()), ('102', cmd(arguments=('-B', script, '--id', 'other'))),

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <fstream>
 #include <limits>
+#include <utility>
 #if defined(__unix__) || defined(__APPLE__)
 #include <csignal>
 #include <unistd.h>
@@ -35,6 +36,10 @@ Result<std::vector<std::string>> qemu_arguments(const Instance& vm,const QemuOpt
     if(!detail::valid_uuid(vm.uuid))return core::fail(core::ErrorCode::invalid_argument,"Invalid VM UUID");
     const auto& s=vm.spec;
     auto accelerator=select_accelerator(s.architecture,s.accelerator);
+    if(options.tcg_cache_mib>1024)
+        return core::fail(core::ErrorCode::invalid_argument,"TCG cache must be 0..1024 MiB");
+    if(options.tcg_cache_mib && accelerator!=Accelerator::tcg)
+        return core::fail(core::ErrorCode::invalid_argument,"TCG cache size requires the TCG accelerator");
     if(accelerator!=Accelerator::tcg && s.architecture!=host_architecture())
         return core::fail(core::ErrorCode::unsupported,"Hardware virtualization requires matching host and guest architectures; select tcg explicitly for emulation");
 #if !defined(__APPLE__)
@@ -50,9 +55,11 @@ Result<std::vector<std::string>> qemu_arguments(const Instance& vm,const QemuOpt
     return core::fail(core::ErrorCode::unsupported,"Persistent QEMU adapter currently supports macOS and Linux");
 #endif
     auto executable=s.architecture==Architecture::aarch64?options.aarch64_executable:options.x86_64_executable;
+    auto accelerator_argument=std::string(name(accelerator));
+    if(options.tcg_cache_mib)accelerator_argument+=",tb-size="+std::to_string(options.tcg_cache_mib);
     std::vector<std::string> args{executable.string(),"-name",s.id,"-uuid",vm.uuid,"-nodefaults","-display","none","-monitor","none",
         "-machine",s.architecture==Architecture::aarch64?"virt,gic-version=3":"q35",
-        "-accel",std::string(name(accelerator)),"-cpu",s.cpu_model.empty()?(accelerator==Accelerator::tcg?(s.architecture==Architecture::aarch64?"cortex-a72":"max"):"host"):s.cpu_model,
+        "-accel",std::move(accelerator_argument),"-cpu",s.cpu_model.empty()?(accelerator==Accelerator::tcg?(s.architecture==Architecture::aarch64?"cortex-a72":"max"):"host"):s.cpu_model,
         "-smp",std::to_string(s.cpus),"-m",std::to_string(s.memory_mib)};
     if(s.boot_mode==BootMode::kernel) {
         auto line=s.kernel_command_line.empty()?std::string(s.architecture==Architecture::aarch64?"console=ttyAMA0":"console=ttyS0")+
@@ -62,9 +69,10 @@ Result<std::vector<std::string>> qemu_arguments(const Instance& vm,const QemuOpt
     } else {
         if(s.architecture==Architecture::x86_64)
             args.insert(args.end(),{"-boot",s.boot_iso.empty()?"order=c":s.boot_disk_first?"order=cd,menu=off":"order=c,once=d,menu=off"});
+        const auto flash_cache=s.direct_io?",cache=none":"";
         if(!s.firmware_vars.empty()) {
-            args.insert(args.end(),{"-drive","if=pflash,format=raw,unit=0,readonly=on,file="+option_path(s.firmware),
-                "-drive","if=pflash,format=raw,unit=1,file="+option_path(s.firmware_vars)});
+            args.insert(args.end(),{"-drive","if=pflash,format=raw,unit=0,readonly=on,file="+option_path(s.firmware)+flash_cache,
+                "-drive","if=pflash,format=raw,unit=1,file="+option_path(s.firmware_vars)+flash_cache});
         } else if(!s.firmware.empty())args.insert(args.end(),{"-bios",s.firmware.string()});
     }
     args.insert(args.end(),{"-qmp","unix:"+option_path(vm.paths.qmp)+",server=on,wait=off"});
@@ -82,9 +90,12 @@ Result<std::vector<std::string>> qemu_arguments(const Instance& vm,const QemuOpt
             "-chardev",channel,"-device","virtio-serial-pci","-device","virtserialport,chardev=agent,name=org.iisacc.agent"});
     }
     auto block=[&](std::string id,const fs::path& path,bool readonly) {
+        detail::Json::Object file{{"driver",detail::Json("file")},{"filename",detail::Json(path.string())}};
+        if(s.direct_io)file.emplace("cache",detail::Json(detail::Json::Object{{"direct",detail::Json(true)},
+                                                                           {"no-flush",detail::Json(false)}}));
         args.insert(args.end(),{"-blockdev",detail::json_text(detail::Json(detail::Json::Object{{"driver",detail::Json("raw")},
             {"node-name",detail::Json(id)},{"read-only",detail::Json(readonly)},
-            {"file",detail::Json(detail::Json::Object{{"driver",detail::Json("file")},{"filename",detail::Json(path.string())}})}}))});
+            {"file",detail::Json(std::move(file))}}))});
     };
     block("data",vm.paths.disk,false);
     auto disk=s.disk_bus==DiskBus::sata?std::string("ide-hd,drive=data,bus=ide.0"):
@@ -97,7 +108,7 @@ Result<std::vector<std::string>> qemu_arguments(const Instance& vm,const QemuOpt
     auto media=[&](const char* id,const fs::path& path,const char* x86device,bool boot) {
         if(path.empty())return;
         if(s.architecture==Architecture::aarch64) {
-            args.insert(args.end(),{"-drive","if=none,media=cdrom,format=raw,readonly=on,id="+std::string(id)+",file="+option_path(path),
+            args.insert(args.end(),{"-drive","if=none,media=cdrom,format=raw,readonly=on,id="+std::string(id)+",file="+option_path(path)+(s.direct_io?",cache=none":""),
                 "-device","usb-storage,bus=usb.0,drive="+std::string(id)+(boot?(s.boot_disk_first?",bootindex=2":",bootindex=1"):"")});
         } else {block(id,path,true);args.insert(args.end(),{"-device",x86device});}
     };

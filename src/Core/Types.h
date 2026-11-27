@@ -47,6 +47,12 @@ struct InstanceSpec final {
     std::string cpu_model;
     // Prefer an installed disk, with installer media as a fallback.
     bool boot_disk_first = false;
+    // Creation-only installer-media copy rate in MiB/s; zero uses the native
+    // file provider's default copy. This setting is not stored in the VM.
+    unsigned media_copy_mib_per_second = 0;
+    // Ask QEMU to bypass its host's file cache for owned block media while
+    // retaining flush requests. Unsupported filesystems cause startup failure.
+    bool direct_io = false;
 };
 struct InstancePaths final {
     fs::path directory, manifest, disk, qmp, agent, console, pid;

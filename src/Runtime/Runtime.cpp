@@ -54,8 +54,16 @@ struct Runtime::Impl final {
         if(force) { auto stopped=backend.control(*vm,Command::terminate);if(!stopped) return std::unexpected(stopped.error()); }
         else {
             if(vm->state==State::paused) return core::fail(core::ErrorCode::busy,"Resume the paused instance before graceful shutdown, or use force");
-            auto shutdown=backend.guest(*vm,"shutdown");
-            if(!shutdown) return std::unexpected(shutdown.error());
+            // Disk guests such as Windows do not speak the iiOS shutdown
+            // protocol. Ask their virtual power button to initiate shutdown;
+            // the loop below still requires independent observation of exit.
+            if(vm->spec.boot_mode==BootMode::disk) {
+                auto shutdown=backend.control(*vm,Command::power_button);
+                if(!shutdown)return std::unexpected(shutdown.error());
+            } else {
+                auto shutdown=backend.guest(*vm,"shutdown");
+                if(!shutdown)return std::unexpected(shutdown.error());
+            }
         }
         const auto end=std::chrono::steady_clock::now()+timeout;
         do {
@@ -94,6 +102,17 @@ Result<Instance> Runtime::pause(std::string_view id) {return impl_->perform(Oper
 Result<Instance> Runtime::resume(std::string_view id) {return impl_->perform(Operation::resume,id,{});}
 Result<Instance> Runtime::stop(std::string_view id,bool force,std::chrono::milliseconds timeout) {
     return impl_->perform(force?Operation::force_stop:Operation::stop,id,timeout);
+}
+Result<Instance> Runtime::replace_payload(std::string_view id,const fs::path& source) {
+    return guarded([&]() -> Result<Instance> {
+        detail::Store::Lock lock(impl_->store,id);
+        auto vm=impl_->inspect(id);if(!vm)return vm;
+        if(vm->state!=State::stopped)
+            return core::fail(core::ErrorCode::busy,"Stop the instance before replacing its payload");
+        auto replaced=impl_->store.replace_payload(*vm,source);
+        if(!replaced)return std::unexpected(replaced.error());
+        return vm;
+    });
 }
 Result<std::vector<Instance>> Runtime::list() {
     return guarded([&]() -> Result<std::vector<Instance>> {

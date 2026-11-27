@@ -8,6 +8,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <system_error>
+#include <thread>
 #if defined(__unix__) || defined(__APPLE__)
 #include <fcntl.h>
 #include <sys/file.h>
@@ -53,6 +54,7 @@ Json instance_json(const Instance& vm) {
         {"guest_channel",Json(name(vm.spec.guest_channel))},{"boot_iso",Json(vm.spec.boot_iso.string())},
         {"payload_iso",Json(vm.spec.payload_iso.string())},{"firmware",Json(vm.spec.firmware.string())},{"firmware_vars",Json(vm.spec.firmware_vars.string())},
         {"allow_reboot",Json(vm.spec.allow_reboot)},{"external_tpm",Json(vm.spec.external_tpm)},{"boot_disk_first",Json(vm.spec.boot_disk_first)},
+        {"direct_io",Json(vm.spec.direct_io)},
         {"network",Json(vm.spec.network)},{"forwards",Json(std::move(forwards))},
         {"state",Json(name(vm.state))},{"directory",Json(vm.paths.directory.string())},
         {"console",Json(vm.paths.console.string())}});
@@ -91,6 +93,60 @@ static void copy_base_disk(const fs::path& source,const fs::path& destination,bo
 #endif
     if(!iiFileProvider::native::copyFile(source,destination))
         throw std::runtime_error("Cannot copy base disk");
+}
+// Copy installer inputs in bounded chunks when the caller requests a rate.
+// Cache eviction is a best-effort hint, not a substitute for host monitoring.
+static void copy_media(const fs::path& source,const fs::path& destination,unsigned rate) {
+    if(!rate) {
+        if(!iiFileProvider::native::copyFile(source,destination))throw std::runtime_error("Cannot copy media");
+        return;
+    }
+#if defined(__unix__) || defined(__APPLE__)
+    struct Descriptor final { int value; ~Descriptor() {if(value>=0)::close(value);} };
+    Descriptor input{::open(source.c_str(),O_RDONLY|O_CLOEXEC)};
+    if(input.value<0)throw std::system_error(errno,std::generic_category(),"open source media");
+    Descriptor output{iiFileProvider::native::openFile(destination.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC,0600)};
+    if(output.value<0)throw std::system_error(errno,std::generic_category(),"create owned media");
+    struct stat before{};
+    if(::fstat(input.value,&before)!=0||!S_ISREG(before.st_mode))throw std::runtime_error("Source media is not a regular file");
+#if defined(__APPLE__)
+    (void)::fcntl(input.value,F_NOCACHE,1);
+    (void)::fcntl(output.value,F_NOCACHE,1);
+#endif
+    std::vector<char> buffer(1024*1024);
+    std::uint64_t copied=0,synced=0;
+    for(;;) {
+        auto count=::read(input.value,buffer.data(),buffer.size());
+        if(count<0&&errno==EINTR)continue;
+        if(count<0)throw std::system_error(errno,std::generic_category(),"read source media");
+        if(!count)break;
+        std::size_t offset=0;
+        while(offset<static_cast<std::size_t>(count)) {
+            auto written=::write(output.value,buffer.data()+offset,static_cast<std::size_t>(count)-offset);
+            if(written<0&&errno==EINTR)continue;
+            if(written<=0)throw std::system_error(written<0?errno:EIO,std::generic_category(),"write owned media");
+            offset+=static_cast<std::size_t>(written);
+        }
+        copied+=static_cast<std::uint64_t>(count);
+        if(copied-synced>=16*1024*1024) {
+            if(::fsync(output.value)!=0)throw std::system_error(errno,std::generic_category(),"flush owned media");
+#if defined(__linux__)
+            (void)::posix_fadvise(input.value,static_cast<off_t>(synced),static_cast<off_t>(copied-synced),POSIX_FADV_DONTNEED);
+            (void)::posix_fadvise(output.value,static_cast<off_t>(synced),static_cast<off_t>(copied-synced),POSIX_FADV_DONTNEED);
+#endif
+            synced=copied;
+        }
+        std::this_thread::sleep_for(std::chrono::duration<double>(static_cast<double>(count)/(rate*1024.0*1024.0)));
+    }
+    if(::fsync(output.value)!=0)throw std::system_error(errno,std::generic_category(),"flush owned media");
+    struct stat after{};
+    if(::fstat(input.value,&after)!=0 || before.st_dev!=after.st_dev || before.st_ino!=after.st_ino ||
+       before.st_size!=after.st_size || before.st_mtime!=after.st_mtime || copied!=static_cast<std::uint64_t>(before.st_size))
+        throw std::runtime_error("Source media changed during copying");
+#else
+    (void)source;(void)destination;
+    throw std::runtime_error("Rate-limited media copy requires macOS or Linux");
+#endif
 }
 Store::Store(fs::path path) {
     const bool created=iiFileProvider::native::createDirectories(path);
@@ -181,6 +237,10 @@ Result<Instance> Store::load(std::string_view id) const {
         auto first=field(*json,"boot_disk_first").get<bool>();if(!first)return core::fail(core::ErrorCode::invalid_argument,"Invalid disk-first boot policy");
         vm.spec.boot_disk_first=first->get();
     }
+    if(json->find("direct_io")) {
+        auto direct=field(*json,"direct_io").get<bool>();if(!direct)return core::fail(core::ErrorCode::invalid_argument,"Invalid direct I/O policy");
+        vm.spec.direct_io=direct->get();
+    }
     if(json->find("external_tpm")) {
         auto enabled=field(*json,"external_tpm").get<bool>();if(!enabled)return core::fail(core::ErrorCode::invalid_argument,"Invalid TPM setting");
         vm.spec.external_tpm=enabled->get();
@@ -232,10 +292,11 @@ Result<Instance> Store::create(const InstanceSpec& input) {
         if(input.boot_mode==BootMode::kernel) {vm.spec.kernel=paths.directory/"kernel";vm.spec.initramfs=paths.directory/"initramfs";}
         vm.spec.base_disk.clear();
         vm.spec.clone_base_disk=false;
+        vm.spec.media_copy_mib_per_second=0;
         vm.spec.initialize_disk=input.boot_mode==BootMode::kernel&&input.base_disk.empty()&&input.initialize_disk;
         if(input.boot_mode==BootMode::kernel) {iiFileProvider::native::copyFile(input.kernel,staging/"kernel");iiFileProvider::native::copyFile(input.initramfs,staging/"initramfs");}
         for(auto pair:{std::pair{"boot_iso",&vm.spec.boot_iso},std::pair{"payload_iso",&vm.spec.payload_iso},std::pair{"firmware",&vm.spec.firmware},std::pair{"firmware_vars",&vm.spec.firmware_vars}})
-            if(!pair.second->empty()) {iiFileProvider::native::copyFile(*pair.second,staging/pair.first);*pair.second=paths.directory/pair.first;}
+            if(!pair.second->empty()) {copy_media(*pair.second,staging/pair.first,input.media_copy_mib_per_second);*pair.second=paths.directory/pair.first;}
         if(input.base_disk.empty()) { iiFileProvider::native::OutputFile file(staging/"data.raw",std::ios::binary);if(!file) throw std::runtime_error("Cannot create volume"); }
         else copy_base_disk(input.base_disk,staging/"data.raw",input.clone_base_disk);
         fs::resize_file(staging/"data.raw",input.disk_mib*1024*1024);
@@ -250,6 +311,32 @@ Result<Instance> Store::create(const InstanceSpec& input) {
         iiFileProvider::native::renameFile(staging,paths.directory);
         return vm;
     } catch(...) { std::error_code ignored;fs::remove_all(staging,ignored);throw; }
+}
+Result<void> Store::replace_payload(const Instance& vm, const fs::path& source) {
+    if(vm.spec.boot_mode!=BootMode::disk || vm.spec.payload_iso.empty())
+        return core::fail(core::ErrorCode::invalid_argument,"Instance has no disk-boot payload slot");
+    if(fs::is_symlink(source) || !fs::is_regular_file(source) || fs::file_size(source)==0)
+        return core::fail(core::ErrorCode::invalid_argument,"Payload must be a nonempty regular file");
+    const auto target=vm.paths.directory/"payload_iso";
+    if(fs::is_symlink(target) || !fs::is_regular_file(target))
+        return core::fail(core::ErrorCode::invalid_argument,"Owned payload is missing or is a symlink");
+    // The fresh staging name is inside the private VM directory. A failed copy
+    // or sync cannot replace the current medium, and rename is atomic on POSIX.
+    const auto staging=vm.paths.directory/(".payload-"+new_uuid());
+    try {
+        if(!iiFileProvider::native::copyFile(source,staging))
+            throw std::runtime_error("Cannot copy replacement payload");
+#if defined(__unix__) || defined(__APPLE__)
+        int fd=::open(staging.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW);
+        if(fd<0)throw std::system_error(errno,std::generic_category(),"open replacement payload");
+        int sync=::fsync(fd);int error=errno;::close(fd);
+        if(sync!=0)throw std::system_error(error,std::generic_category(),"flush replacement payload");
+#endif
+        iiFileProvider::native::renameFile(staging,target);
+        return {};
+    } catch(...) {
+        std::error_code ignored;fs::remove(staging,ignored);throw;
+    }
 }
 Result<void> Store::erase(const Instance& vm) {
     auto current=load(vm.spec.id);

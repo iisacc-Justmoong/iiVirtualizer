@@ -6,17 +6,15 @@
 
 `Processes.h`는 표준 타입과 iiSDKCore Bytes·Result 기반의 요청·스냅샷 계약이다. 로컬은 `Runtime::processes`, 원격은 `Gateway::processes`를 사용한다. `VmClient`는 게이트웨이의 한 VM에 대한 가벼운 참조 객체이며 자체 스레드·주기 타이머·전역 캐시를 만들지 않는다. 호출은 제한 시간이 있는 동기 RPC이므로 앱이 iiSDK executor와 폴링 주기를 소유한다. 같은 Gateway가 VmClient보다 오래 살아 있어야 한다.
 
-| 게이트웨이 action | 동작 |
-| --- | --- |
-| `process-launch` | 실행 키에 바인딩된 새 관리 프로세스 실행 |
-| `process-list` | 관리 프로세스 메타데이터를 핸들 순서로 페이지 조회 |
-| `process-stat` | 상태·입출력 위치·자원·종료 코드와 signal 조회 |
-| `process-read` | stdout 또는 stderr의 지정 절대 바이트 위치부터 읽기 |
-| `process-write` | stdin 큐에 바이너리 청크 접수 |
-| `process-close-input` | 이미 접수한 입력을 전달한 뒤 stdin 닫기 |
-| `process-stop` | 소유한 프로세스 트리를 SIGKILL로 중지 |
-| `process-release` | 완전히 종료·회수한 프로세스 기록과 버퍼 해제 |
-| `vm-monitor` | 구조화된 게스트 자원·감독기 상태 조회 |
+- 게이트웨이 action: `process-launch`; 동작: 실행 키에 바인딩된 새 관리 프로세스 실행
+- 게이트웨이 action: `process-list`; 동작: 관리 프로세스 메타데이터를 핸들 순서로 페이지 조회
+- 게이트웨이 action: `process-stat`; 동작: 상태·입출력 위치·자원·종료 코드와 signal 조회
+- 게이트웨이 action: `process-read`; 동작: stdout 또는 stderr의 지정 절대 바이트 위치부터 읽기
+- 게이트웨이 action: `process-write`; 동작: stdin 큐에 바이너리 청크 접수
+- 게이트웨이 action: `process-close-input`; 동작: 이미 접수한 입력을 전달한 뒤 stdin 닫기
+- 게이트웨이 action: `process-stop`; 동작: 소유한 프로세스 트리를 SIGKILL로 중지
+- 게이트웨이 action: `process-release`; 동작: 완전히 종료·회수한 프로세스 기록과 버퍼 해제
+- 게이트웨이 action: `vm-monitor`; 동작: 구조화된 게스트 자원·감독기 상태 조회
 
 `VmClient`에는 `launch`, `process`, `list`, `read`, `write`, `close_input`, `stop`, `release`, `monitor`, `files`, `describe`, `control`이 있다. 프로세스 중지는 `stop(handle)`이며 VM 수명주기는 `control(Operation::pause/resume/stop/...)`이다. `VmResult<T>`의 오류는 `variant<GatewayError, core::Error>`로, 인증·전송 오류와 VM이 반환한 작업 오류를 구분한다. 낮은 단계의 GatewayReply는 기존처럼 `items[0].result`에서 작업 결과를 구분한다.
 

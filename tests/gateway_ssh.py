@@ -101,6 +101,7 @@ def main():
     if not args.vms:
         for definition in config['runtimes']:
             definition['images'][0]['cpu_model']='max,pauth-impdef=on'
+            definition['tcg_cache_mib']=64
     if args.files:config['grants'].append({'subject':'reader','runtime':'lab','instances':['alice-a'],'actions':['file-list','file-stat','file-read']})
     if args.processes:config['grants'][-1]['actions']+=['process-list','process-stat','process-read','vm-monitor']
     server_file=root/'server.json';write(server_file,config)

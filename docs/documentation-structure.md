@@ -10,7 +10,7 @@
 - `docs/README.md`: 인간용 문서 색인이다.
 - `agent-index.json`: 문서 ID, 원문 경로, JSON 투영 경로와 원문 해시의 색인이다.
 - 일반 문서 `name.md`와 `name.agent.json`은 같은 내용을 서로 다른 형식으로 제공한다.
-- 루트 진입 문서의 JSON은 `entrypoints/`에, 문서 디렉터리 밖의 문서·지침·증거의 JSON은 `mirrors/`에 둔다.
+- 루트 진입 문서의 JSON은 `Entrypoints/`에, 문서 디렉터리 밖의 문서·지침·증거의 JSON은 `mirrors/`에 둔다.
 - `agent-document.schema.json`은 iiJson의 이식 가능한 Schema 정의로 된 형식 묶음이다.
 
 JSON은 절, 줄 범위, 원문 블록, 명령·링크·표·규칙 후보를 구조화한다. 원문 블록을 결합하면 Markdown 바이트를 복원할 수 있어야 한다. JSON의 SHA-256과 현재 Markdown이 일치해야 한다.

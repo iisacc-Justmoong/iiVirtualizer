@@ -29,16 +29,21 @@ int main(int argc, char** argv) {
         std::ofstream(initrd) << "fixture";
         std::map<std::string, State> states;
         bool refuse = false;
+        bool refuse_inspect = false;
         unsigned launches = 0;
+        unsigned powerdowns = 0;
         Backend backend {
             [&](const Instance& vm) -> Result<void> {
                 if (refuse) return core::fail(core::ErrorCode::failed, "launch refused");
                 ++launches; states[vm.uuid] = State::running; return {};
             },
             [&](const Instance& vm, Command command) -> Result<State> {
+                if (command == Command::inspect && refuse_inspect)
+                    return core::fail(core::ErrorCode::failed, "state unavailable");
                 auto& state = states.try_emplace(vm.uuid, State::stopped).first->second;
                 if (command == Command::pause) state = State::paused;
                 if (command == Command::resume) state = State::running;
+                if (command == Command::power_button) { ++powerdowns; state = State::stopped; }
                 if (command == Command::terminate) state = State::stopped;
                 return state;
             },
@@ -74,12 +79,59 @@ int main(int argc, char** argv) {
         auto args=take(qemu_arguments(created));
         QemuOptions invalid_deadline;invalid_deadline.startup_timeout=std::chrono::milliseconds(0);
         check(!qemu_arguments(created,invalid_deadline),"nonpositive launch deadline accepted");
+        auto tcg_vm=created;tcg_vm.spec.accelerator=Accelerator::tcg;
+        QemuOptions bounded_cache;bounded_cache.tcg_cache_mib=64;
+        auto bounded_args=take(qemu_arguments(tcg_vm,bounded_cache));
+        check(std::find(bounded_args.begin(),bounded_args.end(),"tcg,tb-size=64")!=bounded_args.end(),"TCG cache limit not forwarded");
+        bounded_cache.tcg_cache_mib=1025;
+        check(!qemu_arguments(tcg_vm,bounded_cache),"oversized TCG cache accepted");
         check(std::find(args.begin(),args.end(),"-daemonize")!=args.end(), "persistent QEMU invocation");
         check(std::find(args.begin(),args.end(),"-nodefaults")!=args.end(), "implicit devices");
         check(std::find(args.begin(),args.end(),"-nic")!=args.end(), "network policy");
         check(take(runtime.stop("demo")).state==State::stopped, "graceful stop");
         check(take(runtime.start("demo")).state==State::running, "restart");
         check(take(runtime.stop("demo",true)).state==State::stopped, "force stop");
+        // A new build payload can only replace an existing slot on an owned,
+        // confirmed stopped VM. Failed updates leave the original bytes intact.
+        auto original_payload=root/"original.iso", replacement_payload=root/"replacement.iso";
+        std::ofstream(original_payload) << "first job";
+        std::ofstream(replacement_payload) << "second job";
+        InstanceSpec disk_spec;
+        disk_spec.id="windows-build";
+        disk_spec.architecture=Architecture::x86_64;
+        disk_spec.boot_mode=BootMode::disk;
+        disk_spec.payload_iso=original_payload;
+        auto disk_vm=take(runtime.create(disk_spec));
+        auto content=[](const fs::path& path) {
+            std::ifstream file(path, std::ios::binary);
+            return std::string(std::istreambuf_iterator<char>(file), {});
+        };
+        auto owned_payload=disk_vm.paths.directory/"payload_iso";
+        check(!runtime.replace_payload("demo",replacement_payload), "accepted VM without payload slot");
+        check(!runtime.replace_payload("windows-build",root/"missing.iso"), "accepted missing payload");
+        auto empty_payload=root/"empty.iso";
+        { std::ofstream empty(empty_payload); }
+        check(!runtime.replace_payload("windows-build",empty_payload), "accepted empty payload");
+#if defined(__unix__) || defined(__APPLE__)
+        auto linked_payload=root/"linked.iso";
+        fs::create_symlink(replacement_payload,linked_payload);
+        check(!runtime.replace_payload("windows-build",linked_payload), "accepted linked payload");
+#endif
+        check(content(owned_payload)=="first job", "failed replacement changed payload");
+        refuse_inspect=true;
+        check(!runtime.replace_payload("windows-build",replacement_payload), "accepted unknown VM state");
+        refuse_inspect=false;
+        check(content(owned_payload)=="first job", "unknown state changed payload");
+        check(take(runtime.start("windows-build")).state==State::running, "start payload fixture");
+        check(!runtime.replace_payload("windows-build",replacement_payload), "replaced live payload");
+        check(content(owned_payload)=="first job", "live replacement changed payload");
+        check(take(runtime.stop("windows-build")).state==State::stopped, "graceful disk guest shutdown");
+        check(powerdowns==1, "disk guest did not receive ACPI shutdown");
+        auto swapped=take(runtime.replace_payload("windows-build",replacement_payload));
+        check(swapped.uuid==disk_vm.uuid && swapped.state==State::stopped, "replacement changed instance identity");
+        check(content(owned_payload)=="second job", "new payload not installed");
+        check(content(original_payload)=="first job" && content(replacement_payload)=="second job", "source payload changed");
+        check(bool(runtime.remove("windows-build")), "remove payload fixture");
         take(runtime.create(InstanceSpec{.id="persist",.kernel=kernel,.initramfs=initrd}));
         auto removed=runtime.remove("demo"); check(bool(removed), "remove stopped");
         check(!fs::exists(created.paths.directory), "instance storage remains");

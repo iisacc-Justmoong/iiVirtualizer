@@ -6,16 +6,14 @@
 
 `Files.h`는 `FileAction`, `FileRequest`, `FileEntry`, `FileReply`를 제공한다. 로컬 제어에는 `Runtime::files(ID, request, timeout)`을 사용하고 원격 제어에는 `Gateway::files(runtimeID, instanceID, request, timeout)`을 사용한다. 기존 `Gateway::execute`와 JSON 호출에서도 같은 작업을 제공한다.
 
-| 게이트웨이 action | FileAction | 동작 |
-| --- | --- | --- |
-| `file-list` | `list` | 직계 자식의 메타데이터를 이름 순서로 페이지 조회 |
-| `file-stat` | `stat` | 항목 메타데이터 조회, 심볼릭 링크는 따라가지 않음 |
-| `file-read` | `read` | 일반 파일의 `offset`부터 제한된 길이의 바이너리 내용 읽기 |
-| `file-create` | `create` | 새 일반 파일 생성과 초기 내용 기록, 기존 대상이면 거부 |
-| `file-write` | `write` | 기존 일반 파일의 지정 offset 수정, `truncate=true`이면 기록 끝으로 크기를 명시적으로 조정 |
-| `file-mkdir` | `make_directory` | 한 단계의 새 디렉터리 생성, 부모는 이미 존재해야 함 |
-| `file-move` | `move` | 파일·디렉터리·링크를 같은 Files 안에서 이동 또는 이름 변경, 대상이 있으면 거부 |
-| `file-remove` | `remove` | 파일·링크 또는 빈 디렉터리 삭제, 링크 대상은 변경하지 않음 |
+- 게이트웨이 action: `file-list`; FileAction: `list`; 동작: 직계 자식의 메타데이터를 이름 순서로 페이지 조회
+- 게이트웨이 action: `file-stat`; FileAction: `stat`; 동작: 항목 메타데이터 조회, 심볼릭 링크는 따라가지 않음
+- 게이트웨이 action: `file-read`; FileAction: `read`; 동작: 일반 파일의 `offset`부터 제한된 길이의 바이너리 내용 읽기
+- 게이트웨이 action: `file-create`; FileAction: `create`; 동작: 새 일반 파일 생성과 초기 내용 기록, 기존 대상이면 거부
+- 게이트웨이 action: `file-write`; FileAction: `write`; 동작: 기존 일반 파일의 지정 offset 수정, `truncate=true`이면 기록 끝으로 크기를 명시적으로 조정
+- 게이트웨이 action: `file-mkdir`; FileAction: `make_directory`; 동작: 한 단계의 새 디렉터리 생성, 부모는 이미 존재해야 함
+- 게이트웨이 action: `file-move`; FileAction: `move`; 동작: 파일·디렉터리·링크를 같은 Files 안에서 이동 또는 이름 변경, 대상이 있으면 거부
+- 게이트웨이 action: `file-remove`; FileAction: `remove`; 동작: 파일·링크 또는 빈 디렉터리 삭제, 링크 대상은 변경하지 않음
 
 파일 작업은 요청당 VM 하나를 지정한다. 정지·일시정지한 VM은 `busy`로 반환한다. `Files` 루트의 빈 경로는 list·stat에서만 허용하며 루트 자체의 생성·이동·삭제는 거부한다. 중간 디렉터리와 내용 접근의 마지막 항목에 심볼릭 링크가 있으면 따라가지 않는다. 파일이 아닌 장치·FIFO·소켓에는 내용 읽기·쓰기를 수행하지 않는다. 디렉터리는 비재귀 삭제만 지원한다.
 

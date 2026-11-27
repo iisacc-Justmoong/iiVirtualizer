@@ -32,17 +32,19 @@ static Json outcome_json(const v::InstanceOutcome& row,bool flat=false) {
 static void help() {
     std::cout<<"iiVirtualizer "<<IIVIRTUALIZER_VERSION<<" - Linux + iiSDK virtual machine runtime\n"
         "Usage: iivirtualizer COMMAND [ID...] [OPTIONS]\n"
-        "Commands: doctor, create, list, describe, start, pause, resume, stop, remove,\n"
+        "Commands: doctor, create, list, describe, start, pause, resume, stop, remove, set-payload,\n"
         "          guest-info, wait-ready, console, plan\n"
         "          start-many, describe-many, pause-many, resume-many, stop-many\n"
-        "Global: --root PATH --qemu-aarch64 PATH --qemu-x86_64 PATH --workers N --startup-timeout SECONDS --control-timeout SECONDS\n"
+        "Global: --root PATH --qemu-aarch64 PATH --qemu-x86_64 PATH --tcg-cache-mib N --workers N --startup-timeout SECONDS --control-timeout SECONDS\n"
         "Create: --kernel PATH --initramfs PATH [--arch aarch64|x86_64]\n"
         "        [--accel auto|hvf|kvm|tcg] [--cpus N] [--cpu-model MODEL] [--memory MiB] [--disk MiB]\n"
         "        [--base-disk RAW] [--clone-base] [--network] [--forward HOST:GUEST]\n"
         "        [--kernel-args TEXT] [--graphics none|virtio-gpu|vga|ramfb]\n"
         "        [--boot kernel|disk] [--boot-iso ISO] [--payload-iso ISO] [--firmware FILE] [--firmware-vars FILE]\n"
+        "        [--media-copy-rate MiB-per-second (0..64)] [--direct-io]\n"
         "        [--disk-bus virtio|sata|nvme] [--guest-channel virtio|serial] [--allow-reboot] [--external-tpm] [--boot-disk-first]\n"
         "Stop:   [--force] [--timeout SECONDS]\n"
+        "Payload: --payload-iso ISO (stopped disk-boot VM with an existing payload slot)\n"
         "Ready:  [--timeout SECONDS]\n";
 }
 int main(int argc,char** argv) {
@@ -50,7 +52,7 @@ int main(int argc,char** argv) {
         if(argc<2||std::string_view(argv[1])=="--help"||std::string_view(argv[1])=="help") {help();return 0;}
         const std::string command=argv[1];
         if(command=="--version") {std::cout<<IIVIRTUALIZER_VERSION<<'\n';return 0;}
-        const std::set<std::string> commands{"doctor","create","list","describe","start","pause","resume","stop","remove","guest-info","wait-ready","console","plan","start-many","describe-many","pause-many","resume-many","stop-many"};
+        const std::set<std::string> commands{"doctor","create","list","describe","start","pause","resume","stop","remove","set-payload","guest-info","wait-ready","console","plan","start-many","describe-many","pause-many","resume-many","stop-many"};
         if(!commands.contains(command))throw std::invalid_argument("Unknown command: "+command);
         v::fs::path root=ii::virtualizer::cli::default_instance_root;v::QemuOptions engine;
         v::RuntimeOptions runtime_options;std::vector<std::string> ids;const bool many=command.ends_with("-many");
@@ -65,6 +67,7 @@ int main(int argc,char** argv) {
             if(key=="--network") {if(command!="create")throw std::invalid_argument("--network is only valid for create");spec.network=true;continue;}
             if(key=="--allow-reboot") {if(command!="create")throw std::invalid_argument("--allow-reboot is only valid for create");spec.allow_reboot=true;continue;}
             if(key=="--boot-disk-first") {if(command!="create")throw std::invalid_argument("--boot-disk-first is only valid for create");spec.boot_disk_first=true;continue;}
+            if(key=="--direct-io") {if(command!="create")throw std::invalid_argument("--direct-io is only valid for create");spec.direct_io=true;continue;}
             if(key=="--external-tpm") {if(command!="create")throw std::invalid_argument("--external-tpm is only valid for create");spec.external_tpm=true;continue;}
             if(key=="--clone-base") {if(command!="create")throw std::invalid_argument("--clone-base is only valid for create");spec.clone_base_disk=true;continue;}
             if(i+1>=argc)throw std::invalid_argument("Missing value for "+key);
@@ -72,10 +75,12 @@ int main(int argc,char** argv) {
             if(key=="--root")root=value;
             else if(key=="--qemu-aarch64")engine.aarch64_executable=value;
             else if(key=="--qemu-x86_64")engine.x86_64_executable=value;
+            else if(key=="--tcg-cache-mib") {auto n=number(value);if(n>1024)throw std::invalid_argument("TCG cache must be 0..1024 MiB");engine.tcg_cache_mib=static_cast<unsigned>(n);}
             else if(key=="--startup-timeout") {auto n=number(value);if(n<1||n>3600)throw std::invalid_argument("Startup timeout must be 1..3600 seconds");engine.startup_timeout=std::chrono::seconds(n);}
             else if(key=="--control-timeout") {auto n=number(value);if(n<1||n>3600)throw std::invalid_argument("Control timeout must be 1..3600 seconds");engine.timeout=std::chrono::seconds(n);}
             else if(key=="--workers") {auto n=number(value);if(n<1||n>256)throw std::invalid_argument("Worker count must be 1..256");runtime_options.workers=static_cast<std::size_t>(n);}
             else if(key=="--timeout") {if(command!="stop"&&command!="stop-many"&&command!="wait-ready")throw std::invalid_argument("--timeout requires stop, stop-many or wait-ready");timeout=number(value);if(timeout>3600)throw std::invalid_argument("Timeout exceeds one hour");}
+            else if(key=="--payload-iso" && command=="set-payload") {if(value.empty())throw std::invalid_argument("Payload path is empty");spec.payload_iso=v::fs::absolute(value);}
             else {
                 if(command!="create")throw std::invalid_argument("Create option used with "+command+": "+key);
                 if(key=="--kernel")spec.kernel=v::fs::absolute(value);
@@ -85,6 +90,7 @@ int main(int argc,char** argv) {
                 else if(key=="--kernel-args")spec.kernel_command_line=value;
                 else if(key=="--boot-iso")spec.boot_iso=v::fs::absolute(value);
                 else if(key=="--payload-iso")spec.payload_iso=v::fs::absolute(value);
+                else if(key=="--media-copy-rate") {auto n=number(value);if(n>64)throw std::invalid_argument("Media copy rate exceeds 64 MiB/s");spec.media_copy_mib_per_second=static_cast<unsigned>(n);}
                 else if(key=="--firmware")spec.firmware=v::fs::absolute(value);
                 else if(key=="--firmware-vars")spec.firmware_vars=v::fs::absolute(value);
                 else if(key=="--boot") {if(value=="kernel")spec.boot_mode=v::BootMode::kernel;else if(value=="disk")spec.boot_mode=v::BootMode::disk;else throw std::invalid_argument("Unknown boot mode");}
@@ -101,6 +107,7 @@ int main(int argc,char** argv) {
         }
         if((many&&ids.empty())||(!many&&command!="list"&&command!="doctor"&&spec.id.empty()))throw std::invalid_argument("Instance id is required");
         if((command=="list"||command=="doctor")&&!spec.id.empty())throw std::invalid_argument("This command does not accept an instance id");
+        if(command=="set-payload"&&spec.payload_iso.empty())throw std::invalid_argument("set-payload requires --payload-iso");
         if(command=="doctor") {
             auto executable=v::host_architecture()==v::Architecture::aarch64?engine.aarch64_executable:engine.x86_64_executable;
             ii::process::Launch launch;launch.arguments={executable.string(),"--version"};
@@ -134,6 +141,7 @@ int main(int argc,char** argv) {
         else if(command=="pause")print(v::detail::instance_json(take(runtime.pause(spec.id))));
         else if(command=="resume")print(v::detail::instance_json(take(runtime.resume(spec.id))));
         else if(command=="stop")print(v::detail::instance_json(take(runtime.stop(spec.id,force,std::chrono::seconds(timeout)))));
+        else if(command=="set-payload")print(v::detail::instance_json(take(runtime.replace_payload(spec.id,spec.payload_iso))));
         else if(command=="remove") {require(runtime.remove(spec.id));print(Json(Json::Object{{"removed",Json(spec.id)}}));}
         else if(command=="guest-info")print(Json(Json::Object{{"response",Json(take(runtime.guest_info(spec.id)))}}));
         else if(command=="wait-ready") {

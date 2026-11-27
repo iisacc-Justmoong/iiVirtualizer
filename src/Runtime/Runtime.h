@@ -30,6 +30,9 @@ public:
     [[nodiscard]] Result<Instance> resume(std::string_view id);
     [[nodiscard]] Result<Instance> stop(std::string_view id, bool force = false,
         std::chrono::milliseconds timeout = std::chrono::seconds(10));
+    // Atomically replace an existing payload medium while the backend confirms
+    // the owned VM is stopped. The OS disk and instance identity are retained.
+    [[nodiscard]] Result<Instance> replace_payload(std::string_view id, const fs::path& source);
     [[nodiscard]] Result<void> remove(std::string_view id);
     [[nodiscard]] Result<std::string> guest_info(std::string_view id);
     [[nodiscard]] Result<FileReply> files(std::string_view id,const FileRequest&,

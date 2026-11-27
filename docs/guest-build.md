@@ -15,7 +15,7 @@ Windows는 `--guest-channel serial`로 COM1을 빌드 작업자에 연결한다.
 - `src/builder/`: iiSDKCore Process로 argv 배열을 실행하는 C++23 작업자이다. 작업별 제한 시간, 실행 결과, 로그, 상대 경로 산출물을 전달한다. 외부 셸 명령문을 해석하지 않는다.
 - `tools/prepare_build_payload.py`: SDK 작업 트리의 소스를 동결하여 Windows/Linux 빌드 작업과 도구 ISO를 만든다. 원본 SDK 빌드나 설치본을 수정하지 않는다.
 - `tools/prepare_linux_build_guest.py`: 개인 Debian 이미지에 패키지 설치와 네이티브 빌드 부트스트랩을 추가한다.
-- `tools/guest_build.py`: iiVirtualizer CLI로 VM을 생성·부팅하고, 작업 ID와 OS/아키텍처·단계 종료 코드·앱 실행 표식·바이너리 형식·산출물 크기를 확인한다. 일시 정지·재개 확인 후 해당 VM을 정지한다.
+- `tools/guest_build.py`: iiVirtualizer CLI로 VM을 생성·부팅하고 작업 ID와 OS/아키텍처, 단계 종료 코드, 산출물 크기를 확인한다. 선택한 출력 표식과 x86-64 PE 형식도 검사할 수 있으며 일시 정지·재개 확인 후 VM을 정지한다. 반복 작업의 현재 계약은 [Windows 빌드 작업 안내](windows-build-workflow.md)를 따른다.
 - `example/guest-build/`: CMake 네이티브 빌드를 요구하는 iiSDKCore 앱이다. 실제 Runtime 작업자와 Concurrent/Future 연산을 실행해 5050을 확인한다.
 
 호스트 빌드에서 작업자 옵션 `IIVIRTUALIZER_BUILD_BUILDER_AGENT`는 기본 활성화이며 iiSDKCore 0.20을 요구한다. 작업자를 제외한 기존 호스트 런타임만 필요하면 이 옵션을 `OFF`로 설정할 수 있으며 이때의 Core 최소 버전은 0.18이다.
@@ -24,11 +24,11 @@ Windows는 공식 Windows Server 평가판의 Server Core 설치와 별도 휴�
 
 ## 소스 동결과 실행
 
-작업 디렉터리는 `/Volumes/Storage/Workspace/SDK/iiVirtualizer`이다. 준비 도구는 새 `build/` 또는 `resources/` 하위 경로를 요구한다. 같은 명령을 반복할 때에는 기존 결과를 지우지 않고 출력 경로와 인스턴스 ID를 새로 정한다. SDK 원본 대신 `source-manifest.json`으로 해시를 기록한 동결 소스를 게스트에 전달한다.
+작업 디렉터리는 현재 체크아웃한 `iiVirtualizer` 루트이다. 현재 준비 도구가 생성하는 실행 입력과 VM 상태는 `resources/` 하위에 둔다. 같은 명령을 반복할 때에는 기존 결과를 지우지 않고 출력 경로와 인스턴스 ID를 새로 정한다. SDK 원본 대신 `source-manifest.json`으로 해시를 기록한 동결 소스를 게스트에 전달한다.
 
-새로 지속할 실행 입력과 VM 상태는 `resources/` 하위에도 둘 수 있다. 이 작업 경로와 ARM64 UEFI 디스크 옵션은 [아키텍처별 게스트 안내](platform-guests.md)를 따른다. 아래 `build/` 경로는 이전 검증을 재현하기 위한 기록이다.
+실행 입력과 VM 상태의 작업 경로 및 ARM64 UEFI 디스크 옵션은 [아키텍처별 게스트 안내](platform-guests.md)를 따른다. 아래의 `build/` 경로와 명령은 이전 호스트 직접 검증의 기록으로, 현재 경로와 격리 정책에 맞지 않으므로 그대로 실행하지 않는다.
 
-Linux 준비에는 [Debian 부팅 가이드](guest-os-boot.md)의 이미지와 네이티브 `debugfs`가 필요하다. 다음 명령은 동결 소스, Debian 빌드 이미지, 실행 결과를 각각 분리한다.
+Linux 준비에는 [Debian 부팅 가이드](guest-os-boot.md)의 이미지와 네이티브 `debugfs`가 필요하다. 다음은 동결 소스, Debian 빌드 이미지, 실행 결과를 분리했던 과거 명령 기록이다.
 
 ```sh
 python3 -B tools/prepare_build_payload.py --sources-only \
@@ -46,15 +46,13 @@ python3 -B tools/guest_build.py --guest linux --id linux-build \
 
 Linux의 시스템 서비스는 첫 부팅에서 게스트 패키지 저장소에 접속하여 g++, CMake, Ninja를 설치한다. iiSDKCore와 빌드 작업자를 게스트 안에서 먼저 빌드한 다음 앱 작업을 시작한다. 해당 준비 과정도 `build/bootstrap.log` 산출물로 회수한다. 앱이 사용하는 SDK 설치 위치는 게스트 내부 `/opt/iiv/work/build/install`이다.
 
-Windows에는 공식 [Windows Server 2025 평가판](https://www.microsoft.com/en-us/evalcenter/download-windows-server-2025)의 x86_64 ISO와 Windows용 도구 세 개를 `build/build-layer/downloads/`에 준비한다. 준비 스크립트에 고정한 SHA-256과 일치해야 한다.
+Windows에는 공식 [Windows Server 2025 평가판](https://www.microsoft.com/en-us/evalcenter/download-windows-server-2025)의 x86_64 ISO와 Windows용 도구 세 개가 필요하다. 현재 준비 도구는 세 도구 압축 파일을 `resources/build-layer/downloads/`에서 읽으며, 준비 스크립트에 고정한 SHA-256과 일치해야 한다.
 
-| 파일 | 공식 배포처 | SHA-256 |
-| --- | --- | --- |
-| `llvm-mingw-20260922-ucrt-x86_64.zip` | [LLVM-MinGW 릴리스](https://github.com/mstorsjo/llvm-mingw/releases/tag/20260922) | `e3ad77d117a4bea19a7a3b333341824d79a5a371004a10e25b8504e7b3047666` |
-| `cmake-3.31.8-windows-x86_64.zip` | [CMake 3.31.8](https://github.com/Kitware/CMake/releases/tag/v3.31.8) | `81aa9964dbabd71fe02e7ec50472fd3ad56138c49944515ece9001efbff8d719` |
-| `ninja-win.zip` | [Ninja 1.12.1](https://github.com/ninja-build/ninja/releases/tag/v1.12.1) | `f550fec705b6d6ff58f2db3c374c2277a37691678d6aba463adcbb129108467a` |
+- 파일: `llvm-mingw-20260922-ucrt-x86_64.zip`; 공식 배포처: [LLVM-MinGW 릴리스](https://github.com/mstorsjo/llvm-mingw/releases/tag/20260922); SHA-256: `e3ad77d117a4bea19a7a3b333341824d79a5a371004a10e25b8504e7b3047666`
+- 파일: `cmake-3.31.8-windows-x86_64.zip`; 공식 배포처: [CMake 3.31.8](https://github.com/Kitware/CMake/releases/tag/v3.31.8); SHA-256: `81aa9964dbabd71fe02e7ec50472fd3ad56138c49944515ece9001efbff8d719`
+- 파일: `ninja-win.zip`; 공식 배포처: [Ninja 1.12.1](https://github.com/ninja-build/ninja/releases/tag/v1.12.1); SHA-256: `f550fec705b6d6ff58f2db3c374c2277a37691678d6aba463adcbb129108467a`
 
-설치를 시작하는 작업자는 미리 Windows 실행 파일로 부트스트랩한다. 이번 검증은 기존 Mac용 LLVM-MinGW 도구를 읽기 전용으로 사용하고, iiSDKCore 0.20의 별도 Windows 설치를 `build/build-layer/windows-core/install`에 만들었다. 이 설치본은 작업자 실행에만 사용한다. Windows가 앱에 링크할 iiSDKCore는 게스트 내부 `C:/iiv/work/build/install`에 새로 컴파일한다. `src/builder/`는 독립 CMake 프로젝트이며 `iiSDKCore_DIR`, `IIJSON_SOURCE`, Windows 크로스 컴파일러를 지정하여 작업자를 만들 수 있다.
+설치를 시작하는 작업자는 미리 Windows 실행 파일로 부트스트랩한다. 2026-10 검증은 기존 Mac용 LLVM-MinGW 도구를 읽기 전용으로 사용하고, iiSDKCore 0.20의 별도 Windows 설치를 `build/build-layer/windows-core/install`에 만들었다. 이 설치본은 작업자 실행에만 사용했다. Windows가 앱에 링크할 iiSDKCore는 게스트 내부 `C:/iiv/work/build/install`에 새로 컴파일한다. `src/builder/`는 독립 CMake 프로젝트이며 `iiSDKCore_DIR`, `IIJSON_SOURCE`, Windows 크로스 컴파일러를 지정하여 작업자를 만들 수 있다. 다음 명령은 해당 검증의 과거 기록이다.
 
 ```sh
 python3 -B tools/prepare_build_payload.py \
@@ -66,12 +64,12 @@ python3 -B tools/guest_build.py --guest windows --id win-build \
   --boot-iso build/build-layer/downloads/windows-server-2025.iso \
   --payload-iso build/build-layer/windows-payload/windows-payload.iso \
   --qemu build/qemu-display/build/qemu-system-x86_64 \
-  --output build/build-layer/windows-result --timeout 7200
+  --output build/build-layer/windows-result --timeout 7200 --expect-output IIV_GUEST_APP_OK --verify-pe build/app/iiv-guest-app.exe
 ```
 
-무인 설치는 생성한 VM의 Disk 0만 초기화하며, 호스트 물리 디스크를 연결하지 않는다. Server Core 설치, 도구와 동결 소스 복사, 첫 관리자 로그인, 작업 스케줄러 등록·실행을 순서대로 진행한다. 설치 응답 파일에 생성한 시험용 관리자 암호가 있으므로 해당 VM의 개인 빌드 디렉터리를 공개 배포물에 포함하지 않는다. `iiVirtualizerBuild` 작업은 SYSTEM 계정으로 실행하며 이후 OS 시작 시에도 같은 동결 작업을 실행한다. 새로운 소스나 작업을 기존 VM에 배포하는 원격 서비스는 별개이다.
+무인 설치는 생성한 VM의 Disk 0만 초기화하며, 호스트 물리 디스크를 연결하지 않는다. Server Core 설치, 도구와 동결 소스 복사, 첫 관리자 로그인, 작업 스케줄러 등록·실행을 순서대로 진행한다. 설치 응답 파일에 생성한 시험용 관리자 암호가 있으므로 해당 VM의 개인 빌드 디렉터리를 공개 배포물에 포함하지 않는다. `iiVirtualizerBuild` 작업은 SYSTEM 계정으로 실행한다. 현재 시작 스크립트는 후속 작업 매체가 연결되어 있으면 그 작업을 실행하고, 없으면 최초 설치 작업을 실행한다.
 
-시작 배치파일은 `example/guest-build/windows-*.cmd`에서 읽어 CRLF와 ASCII로 직렬화하고 게스트에 그대로 복사한다. 중첩된 `echo`와 리다이렉션으로 명령을 조립하지 않는다. 초기 실험에서 `2>&1` 뒤에 파일 추가 리다이렉션을 붙이면서 마지막 `1`이 파일 디스크립터로 소비되어 시작이 실패했기 때문이다. 회귀 검증은 준비된 시작 파일의 완전한 리다이렉션, CRLF, 등록 작업과 설치 응답 파일의 연결을 확인한다. 실제 Windows 검증에서는 배치파일을 수정하고 작업 스케줄러로 실행하여 네이티브 컴파일러와 Python의 정상 종료를 확인한 뒤 SDK 빌드를 이어갔다.
+시작 배치파일은 `example/guest-build/windows-*.cmd`에서 읽어 CRLF와 ASCII로 직렬화하고 게스트에 그대로 복사한다. 중첩된 `echo`와 리다이렉션으로 명령을 조립하지 않는다. 초기 실험에서 `2>&1` 뒤에 파일 추가 리다이렉션을 붙이면서 마지막 `1`이 파일 디스크립터로 소비되어 시작이 실패했기 때문이다. 회귀 검증은 준비된 시작 파일의 완전한 리다이렉션, CRLF, 등록 작업과 설치 응답 파일의 연결을 확인한다. 2026-10 Windows 검증에서는 배치파일을 수정하고 작업 스케줄러로 실행하여 네이티브 컴파일러와 Python의 정상 종료를 확인한 뒤 SDK 빌드를 이어갔다.
 
 Windows에서는 LLVM-MinGW가 포함한 `python/bin/python3.exe`를 SDK 구조 검증에 사용한다. C++ 모듈 자동 스캔은 끄고 C++23 헤더 기반 앱을 빌드한다. TCG 검증 시간을 줄이기 위해 Core의 최적화 수준은 `-O0`으로 지정하며 앱은 Release로 빌드한다. Windows 네트워크는 연결하지 않는다.
 
@@ -121,4 +119,4 @@ python3 -B tools/bootstrap_qemu.py --with-display \
 
 이 경로에는 `pixman-1` 개발 패키지가 필요하다. 이미 헤드리스 엔진으로 설정한 디렉터리를 `--with-display`로 조용히 재사용하지 않으며, 새 출력 경로를 요구한다. 기존 VM이 사용하는 엔진을 덮어쓰지 않는다.
 
-빌드 작업자의 C++23 프로토콜은 `IIVB1` JSON 이벤트로 작업 ID를 바인딩한다. 로그와 산출물은 크기가 제한된 base64 청크로 전달한다. 수신 측은 허용한 상대 경로, 총 크기, 청크 오프셋, 모든 단계의 정상 종료, 실제 앱 실행 표식과 PE/ELF 아키텍처를 확인한다. 실패·시간 초과·경로 이탈은 성공 보고서 생성 전에 거부한다. OS 내부의 모든 컴파일 명령은 argv 배열이며, Windows 무인 설치의 고정된 부트스트랩 명령은 별도 설치 응답 파일에 둔다.
+빌드 작업자의 C++23 프로토콜은 `IIVB1` JSON 이벤트로 작업 ID를 바인딩한다. 로그와 산출물은 크기가 제한된 base64 청크로 전달한다. 수신 측은 허용한 상대 경로, 총 크기, 청크 오프셋과 모든 단계의 정상 종료를 확인한다. `--expect-output`과 `--verify-pe`를 지정한 경우에는 각각 출력 표식과 x86-64 PE 형식도 확인한다. 실패·시간 초과·경로 이탈은 성공 보고서 생성 전에 거부한다. OS 내부의 모든 컴파일 명령은 argv 배열이며, Windows 무인 설치의 고정된 부트스트랩 명령은 별도 설치 응답 파일에 둔다.

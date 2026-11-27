@@ -1,0 +1,18 @@
+{
+  "steps": [
+    {
+      "argv": [
+        "C:/iiv/tools/cmake/bin/cmake.exe", "-S", "source", "-B", "build/app", "-G", "Ninja",
+        "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_CXX_SCAN_FOR_MODULES=OFF",
+        "-DCMAKE_CXX_COMPILER=C:/iiv/tools/clang/bin/x86_64-w64-mingw32-clang++.exe",
+        "-DCMAKE_MAKE_PROGRAM=C:/iiv/tools/ninja.exe",
+        "-DCMAKE_PREFIX_PATH=C:/iiv/work/build/install"
+      ],
+      "timeout_ms": 1800000
+    },
+    {"argv": ["C:/iiv/tools/cmake/bin/cmake.exe", "--build", "build/app", "--parallel", "2"], "timeout_ms": 1800000},
+    {"argv": ["C:/iiv/tools/cmake/bin/ctest.exe", "--test-dir", "build/app", "--output-on-failure"], "timeout_ms": 1800000},
+    {"argv": ["build/app/iiv-guest-app.exe", "reusable-job"], "timeout_ms": 1800000}
+  ],
+  "artifacts": ["build/app/iiv-guest-app.exe", "build/app/libiiSDKCoreObservation.dll"]
+}

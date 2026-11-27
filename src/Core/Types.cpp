@@ -11,6 +11,8 @@ Result<void> validate(const InstanceSpec& s) {
         return core::fail(core::ErrorCode::invalid_argument,"Unsafe instance id");
     if (s.cpus<1 || s.cpus>256 || s.memory_mib<64 || s.memory_mib>1048576 || s.disk_mib<16 || s.disk_mib>16777216)
         return core::fail(core::ErrorCode::invalid_argument,"Resources outside limits: CPUs 1..256, memory 64..1048576 MiB, disk 16..16777216 MiB");
+    if(s.media_copy_mib_per_second>64)
+        return core::fail(core::ErrorCode::invalid_argument,"Media copy rate must be 0..64 MiB/s");
     if(s.boot_mode!=BootMode::kernel && s.boot_mode!=BootMode::disk)
         return core::fail(core::ErrorCode::invalid_argument,"Invalid boot mode");
     if (s.boot_mode==BootMode::kernel && (s.kernel.empty() || s.initramfs.empty()))

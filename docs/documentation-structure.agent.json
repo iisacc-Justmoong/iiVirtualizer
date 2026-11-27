@@ -10,7 +10,7 @@
   },
   "source": {
     "path": "docs/documentation-structure.md",
-    "sha256": "4ad0396238ed99b79580070ebc2bc15b625658b07ae64370a1d06a00e93a2f72",
+    "sha256": "9bb2e2c0078348567d821cadf5b36df6cb488dbc76194853a46f53400894c8d4",
     "bytes": 1660,
     "line_count": 21,
     "encoding": "utf-8",
@@ -71,7 +71,7 @@
       "kind": "list",
       "start_line": 8,
       "end_line": 14,
-      "raw": "- 루트 `README.md`: 사람용 영문 개요이다.\n- 루트 `AGENT.md`: 프로젝트별 에이전트 지침과 문서 탐색 진입점이다.\n- `docs/README.md`: 인간용 문서 색인이다.\n- `agent-index.json`: 문서 ID, 원문 경로, JSON 투영 경로와 원문 해시의 색인이다.\n- 일반 문서 `name.md`와 `name.agent.json`은 같은 내용을 서로 다른 형식으로 제공한다.\n- 루트 진입 문서의 JSON은 `entrypoints/`에, 문서 디렉터리 밖의 문서·지침·증거의 JSON은 `mirrors/`에 둔다.\n- `agent-document.schema.json`은 iiJson의 이식 가능한 Schema 정의로 된 형식 묶음이다.\n",
+      "raw": "- 루트 `README.md`: 사람용 영문 개요이다.\n- 루트 `AGENT.md`: 프로젝트별 에이전트 지침과 문서 탐색 진입점이다.\n- `docs/README.md`: 인간용 문서 색인이다.\n- `agent-index.json`: 문서 ID, 원문 경로, JSON 투영 경로와 원문 해시의 색인이다.\n- 일반 문서 `name.md`와 `name.agent.json`은 같은 내용을 서로 다른 형식으로 제공한다.\n- 루트 진입 문서의 JSON은 `Entrypoints/`에, 문서 디렉터리 밖의 문서·지침·증거의 JSON은 `mirrors/`에 둔다.\n- `agent-document.schema.json`은 iiJson의 이식 가능한 Schema 정의로 된 형식 묶음이다.\n",
       "items": [
         {
           "marker": "-",
@@ -100,7 +100,7 @@
         },
         {
           "marker": "-",
-          "text": "루트 진입 문서의 JSON은 `entrypoints/`에, 문서 디렉터리 밖의 문서·지침·증거의 JSON은 `mirrors/`에 둔다.",
+          "text": "루트 진입 문서의 JSON은 `Entrypoints/`에, 문서 디렉터리 밖의 문서·지침·증거의 JSON은 `mirrors/`에 둔다.",
           "checked": null
         },
         {

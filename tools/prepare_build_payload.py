@@ -20,14 +20,17 @@ def sha(path):
         for chunk in iter(lambda:stream.read(8*1024*1024),b''):value.update(chunk)
     return value.hexdigest()
 
-def snapshot(source,target):
+def snapshot(source,target,*,exclude_resources=False):
+    """Copy source files while excluding build output and private test state."""
     hashes={}
     for folder,dirs,files in os.walk(source):
-        dirs[:]=[d for d in dirs if d not in ['build','.git','__pycache__','.venv','node_modules']]
+        excluded={'build','.git','__pycache__','.venv','node_modules','.recovery','.state','.cache'}
+        if exclude_resources and Path(folder)==Path(source):excluded.add('resources')
+        dirs[:]=[d for d in dirs if d not in excluded]
         for name in files:
-            if name in ['.DS_Store'] or name.endswith('.pyc'):continue
+            if name in ['.DS_Store','.iisacc-temporary.lock'] or name.endswith(('.pyc','.iisacc-preview')):continue
             original=Path(folder)/name
-            if original.is_symlink():continue
+            if original.is_symlink() or not original.is_file():continue
             relative=original.relative_to(source);dest=target/relative;dest.parent.mkdir(parents=True,exist_ok=True)
             shutil.copy2(original,dest);hashes[str(relative)]=sha(dest)
     return hashes
@@ -40,6 +43,25 @@ def extract_zip(path,output,expected):
         archive.extractall(output)
 
 def step(argv,timeout=1800000,**kwargs):return {'argv':list(map(str,argv)),'timeout_ms':timeout,**kwargs}
+
+def build_parallel(value):
+    """Accept a bounded native-build worker count before creating output."""
+    try:count=int(value)
+    except ValueError as error:raise argparse.ArgumentTypeError('Expected a build worker count') from error
+    if not 1<=count<=16:raise argparse.ArgumentTypeError('Build worker count must be 1..16')
+    return count
+
+def build_timeout(value):
+    """Accept the build agent's bounded per-step deadline in milliseconds."""
+    try:deadline=int(value)
+    except ValueError as error:raise argparse.ArgumentTypeError('Expected a build deadline in milliseconds') from error
+    if not 1<=deadline<=3600000:raise argparse.ArgumentTypeError('Build deadline must be 1..3600000 milliseconds')
+    return deadline
+
+def create_private_output(output):
+    """Create a fresh owner-only directory for sources and installer secrets."""
+    if output.exists():raise ValueError('Choose a fresh directory beneath resources/')
+    output.mkdir(parents=True,mode=0o700)
 
 def write_windows_bootstrap(payload):
     for source,destination in [('windows-start.cmd','start.cmd'),('windows-register-build.cmd','register-build.cmd')]:
@@ -73,16 +95,18 @@ def main():
     parser.add_argument('--agent',type=Path,default=ROOT/'resources/build-layer/windows-bootstrap/build/iiv-build-agent.exe')
     parser.add_argument('--sources-only',action='store_true')
     parser.add_argument('--source-snapshot',type=Path)
+    parser.add_argument('--build-parallel',type=build_parallel,default=3)
+    parser.add_argument('--build-timeout-ms',type=build_timeout,default=1800000)
     args=parser.parse_args();output=generated_path(args.output)
-    if output.exists():raise ValueError('Choose a fresh directory beneath resources/')
-    output.mkdir(parents=True);windows=output/'windows';payload=windows/'Payload';source=payload/'source';source.mkdir(parents=True)
+    create_private_output(output)
+    windows=output/'windows';payload=windows/'Payload';source=payload/'source';source.mkdir(parents=True)
     print('Snapshotting SDK source files',flush=True)
     inventory={}
     if args.source_snapshot:
         inventory['frozen']=snapshot(args.source_snapshot,source)
     else:
         for name in ['iiSDKCore','iiJson']:
-            inventory[name]=snapshot(ROOT.parent/name,source/name)
+            inventory[name]=snapshot(ROOT.parent/name,source/name,exclude_resources=True)
         for folder in ['src/builder','example/guest-build']:
             inventory['iiVirtualizer/'+folder]=snapshot(ROOT/folder,source/'iiVirtualizer'/folder)
     (output/'source-manifest.json').write_text(json.dumps(inventory,indent=2)+'\n')
@@ -98,11 +122,11 @@ def main():
               '-DPython3_EXECUTABLE=C:/iiv/tools/clang/python/bin/python3.exe',
               '-DBUILD_SHARED_LIBS=OFF','-DBUILD_TESTING=OFF','-DIISDKCORE_BUILD_EXAMPLES=OFF',
               '-DCMAKE_CXX_COMPILER='+compiler,'-DCMAKE_MAKE_PROGRAM='+ninja,'-DCMAKE_INSTALL_PREFIX='+work+'/build/install']),
-        step([cmake,'--build','build/core','--target','install','--parallel','3']),
+        step([cmake,'--build','build/core','--target','install','--parallel',args.build_parallel],timeout=args.build_timeout_ms),
         step([cmake,'-S','source/iiVirtualizer/example/guest-build','-B','build/app','-G','Ninja',
               '-DCMAKE_BUILD_TYPE=Release','-DCMAKE_CXX_SCAN_FOR_MODULES=OFF','-DCMAKE_CXX_COMPILER='+compiler,'-DCMAKE_MAKE_PROGRAM='+ninja,
               '-DCMAKE_PREFIX_PATH='+work+'/build/install']),
-        step([cmake,'--build','build/app','--parallel','3']),
+        step([cmake,'--build','build/app','--parallel',args.build_parallel],timeout=args.build_timeout_ms),
         step([ctest,'--test-dir','build/app','--output-on-failure']),
         step([work+'/build/app/iiv-guest-app.exe',nonce+'-win'])],
         'artifacts':['build/app/iiv-guest-app.exe','build/app/libiiSDKCoreObservation.dll']}
@@ -112,7 +136,7 @@ def main():
         step(['/usr/bin/g++','--version']),
         step(['/usr/bin/cmake','-S','source/iiVirtualizer/example/guest-build','-B','build/app','-G','Ninja',
               '-DCMAKE_BUILD_TYPE=Release','-DCMAKE_PREFIX_PATH='+linux_work+'/build/install']),
-        step(['/usr/bin/cmake','--build','build/app','--parallel','3']),
+        step(['/usr/bin/cmake','--build','build/app','--parallel',args.build_parallel],timeout=args.build_timeout_ms),
         step(['/usr/bin/ctest','--test-dir','build/app','--output-on-failure']),
         step([linux_work+'/build/app/iiv-guest-app',nonce+'-linux'])],
         'artifacts':['build/app/iiv-guest-app','build/app/libiiSDKCoreObservation.so.0','build/bootstrap.log']}

@@ -11,13 +11,11 @@ Windows 게스트 빌드 시도는 격리된 시험 호스트가 정지 상태�
 
 검증일은 2026-10-25이다. 아래 첫 표는 초기 0.1.0 검증이며, 0.2.0 다중 VM·0.3.0 게이트웨이·0.4.0 파일시스템 경계 검증은 뒤에 별도로 기록한다. 실제 호스트는 Apple Silicon ARM64 macOS이다. QEMU 11.1.2를 프로젝트 `build/dependencies/`에 빌드했고, 게스트는 Linux 6.12.114 ARM64와 정적 링크한 iiSDKCore PID 1이다. 호스트는 기존 설치본 iiSDKCore 0.18.1과 iiJson을 사용한다.
 
-| 검증 | 결과 | 증거 |
-| --- | --- | --- |
-| 호스트 Release 계약·CLI·패키징 | 3/3 통과 | `build/host-tests.xml` |
-| AddressSanitizer + UndefinedBehaviorSanitizer | 3/3 통과 | `build/asan/build/asan-tests.xml` |
-| 별도 설치 패키지 소비자 | 1/1 통과 | `build/consumer/build/installed-tests.xml` |
-| ARM64 HVF 하드웨어 가상화 | 실제 부팅·서비스·종료 통과 | `build/verification/s-hvf-f39c4a/result.json` |
-| ARM64 TCG CPU 에뮬레이션 | 실제 부팅·서비스·종료 통과 | `build/verification/s-tcg-1136a3/result.json` |
+- 검증: 호스트 Release 계약·CLI·패키징; 결과: 3/3 통과; 증거: `build/host-tests.xml`
+- 검증: AddressSanitizer + UndefinedBehaviorSanitizer; 결과: 3/3 통과; 증거: `build/asan/build/asan-tests.xml`
+- 검증: 별도 설치 패키지 소비자; 결과: 1/1 통과; 증거: `build/consumer/build/installed-tests.xml`
+- 검증: ARM64 HVF 하드웨어 가상화; 결과: 실제 부팅·서비스·종료 통과; 증거: `build/verification/s-hvf-f39c4a/result.json`
+- 검증: ARM64 TCG CPU 에뮬레이션; 결과: 실제 부팅·서비스·종료 통과; 증거: `build/verification/s-tcg-1136a3/result.json`
 
 두 실행기에서 각각 2 vCPU·384 MiB 메모리·64 MiB 디스크를 할당하여 다음을 확인했다.
 
@@ -41,14 +39,12 @@ Linux/KVM 호스트 실행은 현재 macOS에서 실증하지 않았다. Windows
 
 `Runtime` 객체 하나를 유지하는 C++ 제어 프로세스에서 Linux VM 두 개를 동시에 실행하였다. 두 VM은 각각 1 vCPU·256 MiB와 2 vCPU·384 MiB를 사용하며 디스크는 각각 64 MiB이다. 동일한 게스트 HTTP 포트 8080을 서로 다른 호스트 포트로 전달하였다.
 
-| 검증 | 결과 | 증거 |
-| --- | --- | --- |
-| Release 계약·다중 VM·CLI·패키징 | 4/4 통과 | `build/multi-host-tests.xml` |
-| AddressSanitizer + UndefinedBehaviorSanitizer | 4/4 통과 | `build/asan/build/multi-asan-tests.xml` |
-| ThreadSanitizer | 4/4 통과 | `build/tsan/build/multi-tsan-tests.xml` |
-| 갱신한 설치 패키지의 별도 C++ 소비자 | 1/1 통과 | `build/consumer/build/multi-installed-tests.xml` |
-| ARM64 HVF 동시 VM 2개 | 실제 부팅과 격리 검증 통과 | `build/multi-verification/hvf-a59d57/result.json` |
-| ARM64 TCG 동시 VM 2개 | 실제 부팅과 격리 검증 통과 | `build/multi-verification/tcg-90d9cb/result.json` |
+- 검증: Release 계약·다중 VM·CLI·패키징; 결과: 4/4 통과; 증거: `build/multi-host-tests.xml`
+- 검증: AddressSanitizer + UndefinedBehaviorSanitizer; 결과: 4/4 통과; 증거: `build/asan/build/multi-asan-tests.xml`
+- 검증: ThreadSanitizer; 결과: 4/4 통과; 증거: `build/tsan/build/multi-tsan-tests.xml`
+- 검증: 갱신한 설치 패키지의 별도 C++ 소비자; 결과: 1/1 통과; 증거: `build/consumer/build/multi-installed-tests.xml`
+- 검증: ARM64 HVF 동시 VM 2개; 결과: 실제 부팅과 격리 검증 통과; 증거: `build/multi-verification/hvf-a59d57/result.json`
+- 검증: ARM64 TCG 동시 VM 2개; 결과: 실제 부팅과 격리 검증 통과; 증거: `build/multi-verification/tcg-90d9cb/result.json`
 
 HVF 제어 프로세스 PID는 74332, 두 QEMU PID는 74711과 74710이었다. TCG 제어 프로세스 PID는 75458, QEMU PID는 75488과 75487이었다. 각 제어 프로세스에는 VM Runtime 객체 하나와 제어용 worker 4개만 생성하였다. PID 값은 해당 검증 실행의 기록이며 현재 프로세스 상태를 뜻하지 않는다.
 
@@ -62,15 +58,13 @@ HVF 제어 프로세스 PID는 74332, 두 QEMU PID는 74711과 74710이었다. T
 
 `Gateway` 클라이언트와 `GatewayAgent` 수신 객체를 추가하고 iiAccountManager Native·iiNetwork·OpenSSL을 연결하였다. 설치본의 공개 헤더와 CMake 의존성을 통해 별도 C++ 소비자를 빌드하였다. `build/install/bin/iivirtualizer-gateway`와 호스트 CLI는 모두 0.3.0이다.
 
-| 검증 | 결과 | 증거 |
-| --- | --- | --- |
-| Release 전체 계약·다중 VM·CLI·스토리지·SSH/TLS | 7/7 통과 | `build/gateway-full-tests.xml` |
-| AddressSanitizer + UndefinedBehaviorSanitizer 전체 재검사 | 7/7 통과 | `build/asan/build/gateway-asan-recheck.xml` |
-| ThreadSanitizer 전체 | 7/7 통과 | `build/tsan/build/gateway-tsan-tests.xml` |
-| 설치한 SDK의 별도 C++ 소비자 | 1/1 통과 | `build/consumer/build/gateway-installed-tests.xml` |
-| 게이트웨이 제외 빌드와 전체 기존 계약 | 5/5 통과 | `build/off/build/gateway-off-tests.xml` |
-| 실제 SSH + TLS 계정 시험 서버 + ARM64 HVF VM 2개 | 27회 호출과 개별 VM 제어 통과 | `build/gr/b41d0b/result.json` |
-| 운영 iisacc GraphQL 익명 읽기 | HTTP 200·account null·GraphQL 오류 없음 | `build/gateway-production-anonymous.json` |
+- 검증: Release 전체 계약·다중 VM·CLI·스토리지·SSH/TLS; 결과: 7/7 통과; 증거: `build/gateway-full-tests.xml`
+- 검증: AddressSanitizer + UndefinedBehaviorSanitizer 전체 재검사; 결과: 7/7 통과; 증거: `build/asan/build/gateway-asan-recheck.xml`
+- 검증: ThreadSanitizer 전체; 결과: 7/7 통과; 증거: `build/tsan/build/gateway-tsan-tests.xml`
+- 검증: 설치한 SDK의 별도 C++ 소비자; 결과: 1/1 통과; 증거: `build/consumer/build/gateway-installed-tests.xml`
+- 검증: 게이트웨이 제외 빌드와 전체 기존 계약; 결과: 5/5 통과; 증거: `build/off/build/gateway-off-tests.xml`
+- 검증: 실제 SSH + TLS 계정 시험 서버 + ARM64 HVF VM 2개; 결과: 27회 호출과 개별 VM 제어 통과; 증거: `build/gr/b41d0b/result.json`
+- 검증: 운영 iisacc GraphQL 익명 읽기; 결과: HTTP 200·account null·GraphQL 오류 없음; 증거: `build/gateway-production-anonymous.json`
 
 실제 OpenSSH 서버는 같은 물리 호스트의 별도 loopback 포트에서 전용 시험 키와 forced command로 실행하였다. 수신 객체는 TLS로 보호한 합성 계정 서버에 요청마다 세션을 검증하였다. 계정 subject 위조, 다른 런타임·VM 접근, 생성 자원 한도 초과, 세션 취소, 데이터와 함께 반환된 GraphQL 오류, TLS 인증서 불일치, SSH 호스트 키 불일치를 거부하였다. 잘못된 호스트 키에서는 계정 proof가 전송되지 않았다. 다른 계정에 허용된 두 번째 런타임의 생성·목록·삭제도 확인하였다.
 
@@ -86,17 +80,15 @@ HVF 제어 프로세스 PID는 74332, 두 QEMU PID는 74711과 74710이었다. T
 
 읽기 전용 실행 루트·전용 mount namespace·UID/GID 1000·권한 제거·필수 seccomp를 구성하는 `ii-workload`를 추가하였다. `ii-init`은 워크로드를 직접 실행하지 않는다. iiSocietyContainer의 Qt 독립 DirectoryStorage로 `/data/Society.societycontainer`를 준비하고 작업·HOME·임시 파일을 그 안의 Files로 제한한다. 구현 계약은 [파일시스템 문서](filesystem.md)에 있다.
 
-| 검증 | 결과 | 증거 |
-| --- | --- | --- |
-| 호스트 Release 전체 | 9/9 통과 | `build/workspace-final-host-tests.xml` |
-| 호스트 ASan + UBSan 전체 | 9/9 통과 | `build/asan/build/workspace-asan-tests.xml` |
-| 호스트 TSan 전체 | 9/9 통과 | `build/tsan/build/workspace-tsan-tests.xml` |
-| 0.4.0 설치 패키지 소비자 | 1/1 통과 | `build/consumer/build/workspace-installed-tests.xml` |
-| ARM64 HVF 실제 파일시스템 제한 | 부팅마다 56개, 2회 부팅 통과·실패 구성 3종 거부 | `build/fs-verification/hvf-cf6005/result.json` |
-| ARM64 TCG 실제 파일시스템 제한 | 부팅마다 56개, 2회 부팅 통과·실패 구성 3종 거부 | `build/fs-verification/tcg-817a70/result.json` |
-| 제한된 일반 HTTP 워크로드의 HVF 수명주기 | 서비스·재부팅 영속성·일시정지·종료 통과 | `build/verification/s-hvf-9274bc/result.json` |
-| 새 이미지로 SSH·TLS 경유 VM 2개 | 27회 호출·독립 제어·재부팅 통과 | `build/gr/e13c43/result.json` |
-| 기존 demo 갱신·부팅·정지 | 동일 UUID·자원·서비스 유지 | `build/workspace-demo-validation.json` |
+- 검증: 호스트 Release 전체; 결과: 9/9 통과; 증거: `build/workspace-final-host-tests.xml`
+- 검증: 호스트 ASan + UBSan 전체; 결과: 9/9 통과; 증거: `build/asan/build/workspace-asan-tests.xml`
+- 검증: 호스트 TSan 전체; 결과: 9/9 통과; 증거: `build/tsan/build/workspace-tsan-tests.xml`
+- 검증: 0.4.0 설치 패키지 소비자; 결과: 1/1 통과; 증거: `build/consumer/build/workspace-installed-tests.xml`
+- 검증: ARM64 HVF 실제 파일시스템 제한; 결과: 부팅마다 56개, 2회 부팅 통과·실패 구성 3종 거부; 증거: `build/fs-verification/hvf-cf6005/result.json`
+- 검증: ARM64 TCG 실제 파일시스템 제한; 결과: 부팅마다 56개, 2회 부팅 통과·실패 구성 3종 거부; 증거: `build/fs-verification/tcg-817a70/result.json`
+- 검증: 제한된 일반 HTTP 워크로드의 HVF 수명주기; 결과: 서비스·재부팅 영속성·일시정지·종료 통과; 증거: `build/verification/s-hvf-9274bc/result.json`
+- 검증: 새 이미지로 SSH·TLS 경유 VM 2개; 결과: 27회 호출·독립 제어·재부팅 통과; 증거: `build/gr/e13c43/result.json`
+- 검증: 기존 demo 갱신·부팅·정지; 결과: 동일 UUID·자원·서비스 유지; 증거: `build/workspace-demo-validation.json`
 
 실제 Linux 검증은 컨테이너 내부의 파일 생성·읽기·이동·삭제·하드링크·임시 파일과 iiSDK worker·Process를 확인하였다. OS 파일 변경·삭제·권한 변경, 상대 경로와 심볼릭 링크 탈출, 외부 하드링크, `/dev/vda`·`/dev/mem`·`/proc/1/root` 접근, 마운트와 새 마운트 API, chroot·user namespace·clone 우회, 장치 생성·파일 핸들·외부 descriptor·ptrace·콘솔 ioctl·root 복구를 거부하였다. 읽기 전용 루트, `nosuid,nodev` 작업 마운트, 상속 descriptor 정리와 자식의 보호 상속도 실제 커널에서 검사하였다.
 
@@ -114,19 +106,17 @@ HVF 제어 프로세스 PID는 74332, 두 QEMU PID는 74711과 74710이었다. T
 
 `Gateway::files`·`Runtime::files`와 여덟 개의 파일 action을 추가하였다. 공개 계약은 [Files API](files-api.md)에 있다. 파일 내용은 비특권 `ii-files`에서만 처리하며, 워크로드와 파일 처리기의 데이터 마운트는 Files 자체로 좁혔다. 컨테이너의 관리 메타데이터를 연결하는 하드링크는 부팅 준비에서 거부한다.
 
-| 검증 | 결과 | 증거 |
-| --- | --- | --- |
-| Release 전체 계약·스토리지·파일·게이트웨이·SSH/TLS | 11/11 통과 | `build/files-host-tests.xml` |
-| ASan + UBSan 전체 | 11/11 통과 | `build/asan/build/files-asan-final-tests.xml` |
-| 같은 옵션으로 빌드한 iiJson 의존성 | 2/2 통과 | `build/asan/json/build/json-asan-tests.xml` |
-| TSan 전체 | 11/11 통과 | `build/tsan/build/files-tsan-tests.xml` |
-| 0.5.0 설치 패키지의 별도 C++ 소비자 | 1/1 통과 | `build/consumer/build/files-installed-tests.xml` |
-| 게이트웨이 제외 빌드 | 8/8 통과 | `build/off/build/files-off-tests.xml` |
-| 실제 SSH·TLS + ARM64 HVF VM 2개 | 93회 호출 통과 | `build/gf/1f7212/result.json` |
-| 실제 SSH·TLS + ARM64 TCG VM 2개 | 92회 호출 통과 | `build/gf/55ce03/result.json` |
-| HVF 커널 파일시스템 경계 | 부팅마다 56개·2회 부팅·실패 구성 3종 통과 | `build/fs-verification/hvf-2acec8/result.json` |
-| TCG 커널 파일시스템 경계 | 부팅마다 56개·2회 부팅·실패 구성 3종 통과 | `build/fs-verification/tcg-f4b6a4/result.json` |
-| 기존 demo 갱신·실제 부팅·정지 | 같은 UUID·자원·boot=3·Files 기능·HTTP 확인 | `build/files-demo-validation.json` |
+- 검증: Release 전체 계약·스토리지·파일·게이트웨이·SSH/TLS; 결과: 11/11 통과; 증거: `build/files-host-tests.xml`
+- 검증: ASan + UBSan 전체; 결과: 11/11 통과; 증거: `build/asan/build/files-asan-final-tests.xml`
+- 검증: 같은 옵션으로 빌드한 iiJson 의존성; 결과: 2/2 통과; 증거: `build/asan/json/build/json-asan-tests.xml`
+- 검증: TSan 전체; 결과: 11/11 통과; 증거: `build/tsan/build/files-tsan-tests.xml`
+- 검증: 0.5.0 설치 패키지의 별도 C++ 소비자; 결과: 1/1 통과; 증거: `build/consumer/build/files-installed-tests.xml`
+- 검증: 게이트웨이 제외 빌드; 결과: 8/8 통과; 증거: `build/off/build/files-off-tests.xml`
+- 검증: 실제 SSH·TLS + ARM64 HVF VM 2개; 결과: 93회 호출 통과; 증거: `build/gf/1f7212/result.json`
+- 검증: 실제 SSH·TLS + ARM64 TCG VM 2개; 결과: 92회 호출 통과; 증거: `build/gf/55ce03/result.json`
+- 검증: HVF 커널 파일시스템 경계; 결과: 부팅마다 56개·2회 부팅·실패 구성 3종 통과; 증거: `build/fs-verification/hvf-2acec8/result.json`
+- 검증: TCG 커널 파일시스템 경계; 결과: 부팅마다 56개·2회 부팅·실패 구성 3종 통과; 증거: `build/fs-verification/tcg-f4b6a4/result.json`
+- 검증: 기존 demo 갱신·실제 부팅·정지; 결과: 같은 UUID·자원·boot=3·Files 기능·HTTP 확인; 증거: `build/files-demo-validation.json`
 
 실제 SSH 시험은 새 디렉터리·한국어 이름·NUL을 포함하는 바이너리 파일의 생성·청크 읽기·추가 기록·부분 수정·명시적 truncate·조회·이동·삭제를 수행하였다. 16,902바이트 왕복 내용의 SHA-256은 두 가속기에서 모두 `a841d88121288a42108025659e2d120c0face53b330cd5babd973de51f7d0baa`였다. 생성·이동 충돌에서 기존 내용 보존, 정렬한 제한 페이지, 비어 있지 않은 디렉터리의 삭제 거부, sparse gap과 초과 청크 거부도 확인하였다.
 
@@ -146,18 +136,16 @@ SSH·TLS 시험은 같은 물리 호스트의 전용 loopback 서버와 합성 �
 
 `Processes.h`, `Runtime::processes`, `Gateway::processes`, `VmClient`를 추가하였다. 게스트는 iiSDK Process·비차단 Channel을 단일 EventLoop에서 소유하고, Linux adapter가 전용 cgroup·자원 감시·격리 launcher를 연결한다. 실제 실행과 입출력·종료·커서·자원 계약은 [프로세스 API](processes-api.md)에 정의한다.
 
-| 검증 | 결과 | 증거 |
-| --- | --- | --- |
-| Release 전체 | 13/13 통과 | `build/process-host-bootstrap-tests.xml` |
-| ASan + UBSan 전체 | 13/13 통과 | `build/asan/build/process-asan-bootstrap-tests.xml` |
-| TSan 전체 | 13/13 통과 | `build/tsan/build/process-tsan-bootstrap-tests.xml` |
-| 0.6.0 설치 패키지의 별도 소비자 | 1/1 통과 | `build/consumer/build/process-installed-bootstrap-tests.xml` |
-| 게이트웨이 제외 빌드 | 9/9 통과 | `build/off/build/process-off-bootstrap-tests.xml` |
-| 실제 SSH·TLS + ARM64 HVF VM 2개 | 200회 호출 통과 | `build/gp/2f4424/result.json` |
-| 실제 SSH·TLS + ARM64 TCG VM 2개 | 200회 호출 통과 | `build/gp/159f15/result.json` |
-| HVF 기존 파일시스템 경계 | 부팅마다 56개·2회 부팅·실패 구성 3종 통과 | `build/fs-verification/hvf-d78bf1/result.json` |
-| TCG 기존 파일시스템 경계 | 부팅마다 56개·2회 부팅·실패 구성 3종 통과 | `build/fs-verification/tcg-5667e4/result.json` |
-| demo 이미지 교체·부팅·정지 | 같은 UUID·자원·boot=5·파일/프로세스 기능·HTTP 확인 | `build/process-demo-bootstrap-validation.json` |
+- 검증: Release 전체; 결과: 13/13 통과; 증거: `build/process-host-bootstrap-tests.xml`
+- 검증: ASan + UBSan 전체; 결과: 13/13 통과; 증거: `build/asan/build/process-asan-bootstrap-tests.xml`
+- 검증: TSan 전체; 결과: 13/13 통과; 증거: `build/tsan/build/process-tsan-bootstrap-tests.xml`
+- 검증: 0.6.0 설치 패키지의 별도 소비자; 결과: 1/1 통과; 증거: `build/consumer/build/process-installed-bootstrap-tests.xml`
+- 검증: 게이트웨이 제외 빌드; 결과: 9/9 통과; 증거: `build/off/build/process-off-bootstrap-tests.xml`
+- 검증: 실제 SSH·TLS + ARM64 HVF VM 2개; 결과: 200회 호출 통과; 증거: `build/gp/2f4424/result.json`
+- 검증: 실제 SSH·TLS + ARM64 TCG VM 2개; 결과: 200회 호출 통과; 증거: `build/gp/159f15/result.json`
+- 검증: HVF 기존 파일시스템 경계; 결과: 부팅마다 56개·2회 부팅·실패 구성 3종 통과; 증거: `build/fs-verification/hvf-d78bf1/result.json`
+- 검증: TCG 기존 파일시스템 경계; 결과: 부팅마다 56개·2회 부팅·실패 구성 3종 통과; 증거: `build/fs-verification/tcg-5667e4/result.json`
+- 검증: demo 이미지 교체·부팅·정지; 결과: 같은 UUID·자원·boot=5·파일/프로세스 기능·HTTP 확인; 증거: `build/process-demo-bootstrap-validation.json`
 
 구현 전 `build/process-red.xml`은 프로세스 감독기의 미구현 오류로 실패하였다. 네이티브 테스트는 바이너리 양방향 I/O·독립 stderr·EOF·종료 코드·종료 시간 고정·중복 실행 키·실패한 spawn의 자원/등록 회수·실행 시간 제한·동시 실행 16개와 보존 32개·페이지·출력 초과 구간·해제·프레임 대응을 검사한다. 별도 게이트웨이 테스트는 VmClient의 typed 반환·오류 계층·작업별 권한·VM 범위·세션 취소·일시정지·다른 VM의 응답·기존 파일 API를 확인한다.
 

@@ -44,7 +44,7 @@ def container_commands(executable, image, identifier, cpus=2, memory_gib=2, disk
     volume_command.append(volume)
     create_command = [str(executable), "create", "--name", identifier,
                       "--cpus", str(cpus), "--memory", f"{memory_gib}G",
-                      "--network", "none", "--cap-drop", "ALL",
+                      "--network", "none", "--init", "--cap-drop", "ALL",
                       "--read-only", "--tmpfs", "/tmp",
                       "--mount", f"type=volume,source={volume},target=/work",
                       "--env", "IIV_TEST_CONTAINER=1", image]
@@ -53,7 +53,7 @@ def container_commands(executable, image, identifier, cpus=2, memory_gib=2, disk
     else:
         create_command[create_command.index("--tmpfs") + 1] = "/tmp:rw,nosuid,nodev,size=256m"
         create_command[create_command.index("--cap-drop"):create_command.index("--cap-drop")] = [
-            "--memory-swap", f"{memory_gib}G", "--pids-limit", "256", "--init"]
+            "--memory-swap", f"{memory_gib}G", "--pids-limit", "256"]
         if io_device is not None:
             limit = f"{io_device}:{(io_mib or 4) * 1024 * 1024}"
             create_command[create_command.index("--cap-drop"):create_command.index("--cap-drop")] = [

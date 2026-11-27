@@ -172,6 +172,16 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/build_guest.py" "$<TARGET_FILE:iivirtualizer>" "@WORK@")
     iiv_resource_test(iiVirtualizer.BuildPayload "${Python3_EXECUTABLE}" -B
         "${CMAKE_CURRENT_SOURCE_DIR}/tests/build_payload.py" "@WORK@/bp")
+    iiv_resource_test(iiVirtualizer.WindowsBuildJob "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/windows_build_job.py" "@WORK@")
+    add_test(NAME iiVirtualizer.GuestBuildRunner COMMAND "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/guest_build_runner.py")
+    iiv_resource_test(iiVirtualizer.PythonApi "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/python_api.py" "$<TARGET_FILE:iivirtualizer>" "@WORK@")
+    add_test(NAME iiVirtualizer.InstalledPythonApi COMMAND "${Python3_EXECUTABLE}" -B
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/install_python_api.py" "${CMAKE_COMMAND}"
+        "${CMAKE_CURRENT_BINARY_DIR}" "$<TARGET_FILE:iivirtualizer>" "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/resources")
     if(IIVIRTUALIZER_BUILD_BUILDER_AGENT)
         iiv_resource_test(iiVirtualizer.BuildAgent "${Python3_EXECUTABLE}" -B
             "${CMAKE_CURRENT_SOURCE_DIR}/tests/build_agent.py" "$<TARGET_FILE:iiv-build-agent>" "@WORK@/ba")
@@ -232,4 +242,8 @@ configure_package_config_file(cmake/iiVirtualizerConfig.cmake.in "${CMAKE_CURREN
 write_basic_package_version_file("${CMAKE_CURRENT_BINARY_DIR}/iiVirtualizerConfigVersion.cmake" VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/iiVirtualizerConfig.cmake" "${CMAKE_CURRENT_BINARY_DIR}/iiVirtualizerConfigVersion.cmake" DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/iiVirtualizer)
 install(FILES README.md DESTINATION ${CMAKE_INSTALL_DATADIR}/iiVirtualizer)
-install(DIRECTORY docs/ DESTINATION ${CMAKE_INSTALL_DATADIR}/iiVirtualizer/docs)
+install(FILES src/python/ii_virtualizer.py DESTINATION ${CMAKE_INSTALL_DATADIR}/iiVirtualizer/python)
+install(DIRECTORY docs/ DESTINATION ${CMAKE_INSTALL_DATADIR}/iiVirtualizer/docs
+    PATTERN ".DS_Store" EXCLUDE
+    PATTERN ".iisacc-temporary.lock" EXCLUDE
+    PATTERN "*.iisacc-preview" EXCLUDE)

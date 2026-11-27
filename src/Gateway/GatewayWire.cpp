@@ -240,6 +240,7 @@ static Instance instance(const Json& value) {
     }
     if(value.find("allow_reboot"))vm.spec.allow_reboot=boolean(value,"allow_reboot");
     if(value.find("boot_disk_first"))vm.spec.boot_disk_first=boolean(value,"boot_disk_first");
+    if(value.find("direct_io"))vm.spec.direct_io=boolean(value,"direct_io");
     if(value.find("external_tpm"))vm.spec.external_tpm=boolean(value,"external_tpm");
     if(value.find("boot_iso"))vm.spec.boot_iso=detail::text_field(value,"boot_iso");
     if(value.find("payload_iso"))vm.spec.payload_iso=detail::text_field(value,"payload_iso");

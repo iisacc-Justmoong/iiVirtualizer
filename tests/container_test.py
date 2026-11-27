@@ -41,6 +41,7 @@ class ContainerPolicyTests(unittest.TestCase):
         self.assertEqual(create[create.index("--cap-drop") + 1], "ALL")
         self.assertEqual(create[create.index("--cpus") + 1], "2")
         self.assertEqual(create[create.index("--memory") + 1], "2G")
+        self.assertIn("--init", create)
         self.assertIn("--read-only", create)
         self.assertIn("IIV_TEST_CONTAINER=1", create)
         self.assertEqual(create[create.index("--mount") + 1],

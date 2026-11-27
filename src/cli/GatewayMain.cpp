@@ -59,8 +59,9 @@ static int agent(const v::fs::path& filename) {
     std::vector<std::unique_ptr<v::Runtime>> owners;std::vector<v::GatewayRuntime> runtimes;
     auto definitions=take(v::detail::field(config,"runtimes").get<Json::Array>());
     for(const auto& value:definitions.get()) {
-        allowed(value,{"id","root","qemu_aarch64","qemu_x86_64","images","workers","capacity"});
+        allowed(value,{"id","root","qemu_aarch64","qemu_x86_64","tcg_cache_mib","images","workers","capacity"});
         v::QemuOptions engine;engine.aarch64_executable=text(value,"qemu_aarch64",engine.aarch64_executable.string());engine.x86_64_executable=text(value,"qemu_x86_64",engine.x86_64_executable.string());
+        engine.tcg_cache_mib=static_cast<unsigned>(integer(value,"tcg_cache_mib",0,1024));
         v::RuntimeOptions options;options.workers=integer(value,"workers",0,256);options.capacity=integer(value,"capacity",128,65536);
         auto root=path(base,text(value,"root"));if(root.empty())throw std::invalid_argument("Runtime root is required");
         owners.push_back(std::make_unique<v::Runtime>(root,v::qemu_backend(engine),options));

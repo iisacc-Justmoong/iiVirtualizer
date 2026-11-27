@@ -27,6 +27,8 @@ public:
     [[nodiscard]] Result<std::vector<std::string>> ids() const;
     [[nodiscard]] Result<Instance> load(std::string_view id) const;
     [[nodiscard]] Result<Instance> create(const InstanceSpec&);
+    // Install a copied payload in an existing VM while its caller holds Lock.
+    [[nodiscard]] Result<void> replace_payload(const Instance&, const fs::path& source);
     [[nodiscard]] Result<void> erase(const Instance&);
 };
 } // namespace ii::virtualizer::detail
